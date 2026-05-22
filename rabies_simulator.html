@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RABV Neuroinvasion Simulator — NeuroViral Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;600;700&family=IBM+Plex+Sans:wght@300;400;500;600&family=Syne:wght@700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0d1119;--bg3:#131a27;--surface:#1a2235;--surface2:#202d42;
+  --border:rgba(180,80,80,0.15);--border2:rgba(220,100,80,0.25);
+  --text:#e4ddd8;--text2:#9a8e88;--text3:#524840;
+  --red:#e05555;--red2:#ff8070;--amber:#e8913a;--yellow:#e8c83a;
+  --green:#4ecb8e;--blue:#4f8cf9;--purple:#9b78fa;
+  --mono:'IBM Plex Mono',monospace;--sans:'IBM Plex Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;line-height:1.55;
+  background-image:radial-gradient(ellipse at 20% 30%,rgba(180,40,40,0.05) 0%,transparent 60%),radial-gradient(ellipse at 80% 70%,rgba(40,60,180,0.04) 0%,transparent 60%);}
+/* HEADER */
+.hdr{border-bottom:1px solid var(--border2);padding:12px 22px;display:flex;align-items:center;gap:12px;background:rgba(7,9,15,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.hdr-back{font-family:var(--mono);font-size:9px;color:var(--text3);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:4px;transition:all .15s;}
+.hdr-back:hover{color:var(--red2);border-color:var(--border2);}
+.hdr-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--red),var(--purple));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:#fff;}
+.hdr-title{font-family:var(--display);font-size:14px;font-weight:700;color:var(--text);}
+.hdr-sub{font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:1px;}
+.hdr-badge{margin-left:auto;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:20px;color:var(--red2);border:1px solid rgba(224,85,85,0.3);background:rgba(224,85,85,0.07);}
+/* LAYOUT */
+.main{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 53px);}
+/* LEFT */
+.left{border-right:1px solid var(--border);background:var(--bg2);overflow-y:auto;}
+.sect{padding:12px 14px;border-bottom:1px solid var(--border);}
+.sect-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sect-title::before{content:'';width:8px;height:1px;background:var(--red);}
+.field{margin-bottom:8px;}
+.fl{display:flex;align-items:center;gap:8px;}
+.flabel{font-size:10px;color:var(--text2);min-width:108px;flex-shrink:0;}
+.fval{font-family:var(--mono);font-size:9px;color:var(--red2);min-width:42px;text-align:right;}
+input[type=range]{flex:1;-webkit-appearance:none;height:2px;background:var(--surface2);border-radius:1px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--red);border-radius:50%;cursor:pointer;border:2px solid var(--bg2);}
+select{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:5px;font-family:var(--sans);font-size:11px;outline:none;cursor:pointer;margin-top:3px;}
+.seg{display:flex;gap:3px;flex-wrap:wrap;}
+.sbtn{font-family:var(--mono);font-size:8px;padding:3px 7px;border:1px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
+.sbtn.on{background:rgba(224,85,85,.12);border-color:var(--red);color:var(--red2);}
+.sbtn.blue.on{background:rgba(79,140,249,.12);border-color:var(--blue);color:#7bc8ff;}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.tog-label{font-size:10px;color:var(--text2);}
+.tog{position:relative;width:26px;height:13px;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-track{position:absolute;inset:0;background:var(--surface2);border-radius:7px;cursor:pointer;transition:background .2s;}
+.tog input:checked+.tog-track{background:var(--red);}
+.tog-thumb{position:absolute;top:2px;left:2px;width:9px;height:9px;background:var(--bg);border-radius:50%;transition:transform .2s;pointer-events:none;}
+.tog input:checked~.tog-thumb{transform:translateX(13px);}
+/* PLAY CONTROLS */
+.play-ctrl{display:flex;gap:6px;margin-top:10px;align-items:center;}
+.btn{font-family:var(--mono);font-size:9px;padding:5px 10px;border:1px solid var(--border2);border-radius:4px;background:none;color:var(--text2);cursor:pointer;transition:all .15s;}
+.btn:hover{border-color:var(--red);color:var(--red2);}
+.btn.primary{background:rgba(224,85,85,.15);border-color:var(--red);color:var(--red2);}
+/* RIGHT */
+.right{overflow-y:auto;}
+.viz{padding:16px 20px;}
+/* PHASE STEPS */
+.phase-steps{display:flex;gap:0;margin-bottom:14px;}
+.phase-step{flex:1;padding:8px 10px;background:var(--surface);border:1px solid var(--border);cursor:pointer;transition:all .2s;position:relative;}
+.phase-step:first-child{border-radius:6px 0 0 6px;}
+.phase-step:last-child{border-radius:0 6px 6px 0;}
+.phase-step.active{background:rgba(224,85,85,.1);border-color:var(--red);z-index:1;}
+.phase-step-num{font-family:var(--mono);font-size:8px;color:var(--text3);}
+.phase-step-label{font-family:var(--mono);font-size:9px;color:var(--text2);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.phase-step.active .phase-step-label{color:var(--red2);}
+/* TIMELINE */
+.timeline-wrap{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 18px;margin-bottom:14px;}
+.timeline-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+.tl-title{font-family:var(--mono);font-size:10px;color:var(--red2);}
+.tl-day{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text);}
+.tl-status{font-size:10px;color:var(--text3);}
+.tl-track{height:8px;background:var(--surface);border-radius:4px;position:relative;overflow:hidden;margin-bottom:8px;}
+.tl-fill{height:100%;border-radius:4px;background:linear-gradient(90deg,#9b78fa,#e05555,#e8913a);transition:width .4s ease;}
+/* ANATOMY PANEL */
+.anatomy-panel{display:grid;grid-template-columns:180px 1fr;gap:14px;margin-bottom:14px;}
+.anatomy-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px;display:flex;flex-direction:column;align-items:center;}
+/* METRIC CARDS */
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px;}
+.info-card{background:var(--bg2);border:1px solid var(--border);border-radius:8px;padding:10px 12px;}
+.info-card.highlight{border-color:var(--border2);}
+.ic-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.ic-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--red2);letter-spacing:-.02em;margin-bottom:2px;}
+.ic-sub{font-size:9px;color:var(--text3);line-height:1.4;}
+/* BBB STATUS */
+.bbb-status{background:var(--bg2);border:1px solid var(--border2);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.bbb-hdr{font-family:var(--mono);font-size:9px;margin-bottom:8px;display:flex;align-items:center;gap:8px;}
+.nvu-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
+.nvu-label{font-size:8px;color:var(--text2);min-width:100px;font-family:var(--mono);}
+.nvu-track{flex:1;height:4px;background:var(--surface);border-radius:2px;overflow:hidden;}
+.nvu-bar{height:100%;border-radius:2px;transition:width .6s;}
+.nvu-val{font-family:var(--mono);font-size:8px;color:var(--text3);min-width:28px;text-align:right;}
+/* FULL CARD */
+.full-card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;margin-bottom:14px;}
+.card-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.card-title::before{content:'';width:8px;height:1px;background:currentColor;}
+/* INTERP */
+.interp{font-size:10px;color:var(--text2);line-height:1.65;padding:10px 13px;background:var(--bg3);border-left:2px solid var(--red);border-radius:0 6px 6px 0;margin-top:8px;}
+/* PROTEIN TABLE */
+.ptable{width:100%;border-collapse:collapse;font-size:10px;}
+.ptable th{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:5px 8px;text-align:left;border-bottom:1px solid var(--border);}
+.ptable td{padding:5px 8px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text2);vertical-align:top;}
+.ptable tr:last-child td{border-bottom:none;}
+.pname{font-family:var(--mono);color:var(--text);font-weight:700;}
+.pbbb{color:var(--red2);}
+.pgood{color:var(--green);}
+/* VIRAL PARTICLE ANIMATION */
+@keyframes viralPulse{0%,100%{opacity:.5;}50%{opacity:1;}}
+.vp{animation:viralPulse 1.2s ease-in-out infinite;}
+@keyframes dashFlow{to{stroke-dashoffset:-20;}}
+.flow-path{animation:dashFlow 1.5s linear infinite;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px;}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="homepage.html">← Home</a>
+  <div class="hdr-logo">RABV</div>
+  <div>
+    <div class="hdr-title">RABV Neuroinvasion Simulator</div>
+    <div class="hdr-sub">NMJ entry · axonal transport · CNS invasion · centrifugal spread · BBB status</div>
+  </div>
+  <div class="hdr-badge">Module 02 · v7.0</div>
+  <div id="ode-badge" style="font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:20px;
+    color:#524840;border:1px solid rgba(255,255,255,0.06);background:rgba(255,255,255,0.03);
+    margin-left:6px;transition:all .3s;cursor:default">⬤ checking…</div>
+</header>
+<div class="main">
+<aside class="left">
+
+  <!-- INFECTION PARAMS -->
+  <div class="sect">
+    <div class="sect-title">Infection Parameters</div>
+    <div class="field">
+      <span class="flabel" style="display:block;margin-bottom:3px">Bite location</span>
+      <select id="bite-location" onchange="simulate()">
+        <option value="face">Face / head (highest risk)</option>
+        <option value="hand">Hand / forearm</option>
+        <option value="upper-arm">Upper arm / shoulder</option>
+        <option value="torso">Torso</option>
+        <option value="thigh">Thigh</option>
+        <option value="foot" selected>Foot / distal (lowest)</option>
+      </select>
+    </div>
+    <div class="field">
+      <span class="flabel" style="display:block;margin-bottom:3px">Bite depth / tissue</span>
+      <select id="bite-depth" onchange="simulate()">
+        <option value="superficial">Superficial (skin only)</option>
+        <option value="muscle" selected>Muscle (NMJ exposure)</option>
+        <option value="deep">Deep (nerve trunk direct)</option>
+      </select>
+    </div>
+    <div class="field">
+      <span class="flabel" style="display:block;margin-bottom:4px">Viral inoculum</span>
+      <div class="seg" id="dose-btns">
+        <button class="sbtn" onclick="setDose('low')">Low</button>
+        <button class="sbtn on" onclick="setDose('med')">Medium</button>
+        <button class="sbtn" onclick="setDose('high')">High</button>
+      </div>
+    </div>
+    <div class="field"><div class="fl"><span class="flabel">Nerve velocity</span><input type="range" id="velocity" min="12" max="400" value="200" oninput="syncV()"><span class="fval" id="vel-v">200 mm/d</span></div></div>
+    <div class="field">
+      <span class="flabel" style="display:block;margin-bottom:4px">p75NTR co-transport</span>
+      <div class="seg">
+        <button class="sbtn blue on" id="p75-on" onclick="setP75(true)">Engaged (+speed)</button>
+        <button class="sbtn blue" id="p75-off" onclick="setP75(false)">Absent</button>
+      </div>
+    </div>
+    <div class="field"><div class="fl"><span class="flabel">Replication lag</span><input type="range" id="replag" min="6" max="24" step="1" value="9" oninput="syncRL()"><span class="fval" id="rl-v">9h</span></div></div>
+  </div>
+
+  <!-- HOST IMMUNE -->
+  <div class="sect">
+    <div class="sect-title">Host Immune Status</div>
+    <div class="tog-row"><span class="tog-label">Prior vaccination</span><label class="tog"><input type="checkbox" id="vaccinated" onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">Post-exposure prophylaxis (PEP)</span><label class="tog"><input type="checkbox" id="pep" onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">Immunocompromised</span><label class="tog"><input type="checkbox" id="immuno" onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+  </div>
+
+  <!-- VIRAL PROTEINS -->
+  <div class="sect">
+    <div class="sect-title">Active Viral Proteins</div>
+    <div style="font-size:8px;color:var(--text3);margin-bottom:8px">Toggle to study contribution</div>
+    <div class="tog-row"><span class="tog-label">G — entry/fusion (nAChR binding)</span><label class="tog"><input type="checkbox" id="prot-G" checked onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">P — IFN block / dynein transport</span><label class="tog"><input type="checkbox" id="prot-P" checked onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">N — RNP encapsidation (11-mer)</span><label class="tog"><input type="checkbox" id="prot-N" checked onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">M — matrix / NF-κB modulation</span><label class="tog"><input type="checkbox" id="prot-M" checked onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">L — RNA polymerase (RdRp)</span><label class="tog"><input type="checkbox" id="prot-L" checked onchange="simulate()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+  </div>
+
+  <!-- SIMULATION CONTROLS -->
+  <div class="sect">
+    <div class="sect-title">Timeline Control</div>
+    <div class="field"><div class="fl"><span class="flabel">Current day</span><input type="range" id="day-slider" min="0" max="60" step="1" value="0" oninput="setDay(+this.value)"><span class="fval" id="day-v">Day 0</span></div></div>
+    <div class="play-ctrl">
+      <button class="btn primary" id="play-btn" onclick="togglePlay()">▶ Play</button>
+      <button class="btn" onclick="resetSim()">↺ Reset</button>
+      <button class="btn" onclick="jumpCNS()" style="border-color:var(--blue);color:#7bc8ff">⚡ CNS</button>
+    </div>
+    <div style="margin-top:8px;font-size:9px;color:var(--text3)">Speed: <span id="spd-lbl">1×</span> <input type="range" id="spd" min="1" max="10" value="3" style="width:60px;display:inline-block;margin-left:4px;vertical-align:middle"></div>
+  </div>
+
+</aside>
+<main class="right">
+<div class="viz">
+
+  <!-- PHASE NAVIGATOR -->
+  <div class="phase-steps" id="phase-steps">
+    <div class="phase-step active" onclick="setPhaseView(0)" id="ph-0"><div class="phase-step-num">PHASE 1</div><div class="phase-step-label">NMJ Entry</div></div>
+    <div class="phase-step" onclick="setPhaseView(1)" id="ph-1"><div class="phase-step-num">PHASE 2</div><div class="phase-step-label">PNS Transport</div></div>
+    <div class="phase-step" onclick="setPhaseView(2)" id="ph-2"><div class="phase-step-num">PHASE 3</div><div class="phase-step-label">CNS Invasion</div></div>
+    <div class="phase-step" onclick="setPhaseView(3)" id="ph-3"><div class="phase-step-num">PHASE 4</div><div class="phase-step-label">Centrifugal Spread</div></div>
+  </div>
+
+  <!-- TIMELINE -->
+  <div class="timeline-wrap">
+    <div class="timeline-header">
+      <div><div class="tl-title">Infection Timeline</div><div class="tl-status" id="tl-phase">Phase 1 — Local entry at NMJ</div></div>
+      <div style="text-align:right"><div class="tl-day" id="tl-day">Day 0</div><div class="tl-status" id="tl-status">Viral inoculation</div></div>
+    </div>
+    <div class="tl-track"><div class="tl-fill" id="tl-fill" style="width:0%"></div></div>
+    <div style="display:flex;justify-content:space-between;font-family:var(--mono);font-size:8px;color:var(--text3);">
+      <span>Day 0</span><span id="tp-1">D2</span><span id="tp-2">D8</span><span id="tp-3">D14</span><span>Day <span id="tp-end">30</span></span>
+    </div>
+  </div>
+
+  <!-- ANATOMY + METRICS -->
+  <div class="anatomy-panel">
+    <div class="anatomy-card">
+      <div style="font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;align-self:flex-start">Neuroanatomical spread</div>
+      <svg id="anatomy-svg" width="150" height="360" viewBox="0 0 150 360" xmlns="http://www.w3.org/2000/svg">
+        <!-- Head/Brain -->
+        <ellipse cx="75" cy="28" rx="22" ry="25" fill="#0d1a2e" stroke="rgba(100,140,200,0.2)" stroke-width="1"/>
+        <text x="75" y="31" text-anchor="middle" font-size="7" fill="rgba(100,140,200,0.5)" font-family="IBM Plex Mono">BRAIN</text>
+        <!-- Neck -->
+        <rect x="65" y="51" width="18" height="14" rx="2" fill="#0a1520" stroke="rgba(100,140,200,0.1)" stroke-width="1"/>
+        <!-- Torso -->
+        <rect x="45" y="65" width="58" height="80" rx="6" fill="#0a1520" stroke="rgba(100,140,200,0.1)" stroke-width="1"/>
+        <text x="74" y="108" text-anchor="middle" font-size="6" fill="rgba(100,140,200,0.3)" font-family="IBM Plex Mono">SPINAL</text>
+        <!-- Arms -->
+        <rect x="20" y="65" width="25" height="65" rx="5" fill="#080f1a" stroke="rgba(100,140,200,0.07)" stroke-width="1"/>
+        <rect x="103" y="65" width="25" height="65" rx="5" fill="#080f1a" stroke="rgba(100,140,200,0.07)" stroke-width="1"/>
+        <!-- Pelvis -->
+        <rect x="50" y="145" width="48" height="22" rx="4" fill="#080f1a" stroke="rgba(100,140,200,0.07)" stroke-width="1"/>
+        <!-- Legs -->
+        <rect x="50" y="167" width="20" height="135" rx="5" fill="#080f1a" stroke="rgba(100,140,200,0.07)" stroke-width="1"/>
+        <rect x="78" y="167" width="20" height="135" rx="5" fill="#080f1a" stroke="rgba(100,140,200,0.07)" stroke-width="1"/>
+        <!-- Nerve pathways -->
+        <line x1="75" y1="51" x2="75" y2="156" stroke="rgba(79,140,249,0.35)" stroke-width="2" stroke-dasharray="4 3"/>
+        <path d="M70 156 Q62 175 62 300" stroke="rgba(79,140,249,0.2)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+        <path d="M80 156 Q88 175 88 300" stroke="rgba(79,140,249,0.2)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+        <path d="M67 72 Q32 85 32 130" stroke="rgba(79,140,249,0.2)" stroke-width="1.5" stroke-dasharray="3 3" fill="none"/>
+        <!-- Bite marker -->
+        <circle id="bite-marker" cx="88" cy="305" r="6" fill="rgba(224,85,85,0.2)" stroke="var(--red)" stroke-width="1.5"/>
+        <circle id="bite-inner" cx="88" cy="305" r="3" fill="var(--red2)"/>
+        <text id="bite-lbl" x="97" y="308" font-size="7" fill="var(--red2)" font-family="IBM Plex Mono">BITE</text>
+        <!-- Viral path -->
+        <path id="viral-path" d="M88 305 Q88 230 85 156 Q78 100 75 28" stroke="var(--red)" stroke-width="1.5" stroke-dasharray="5 4" fill="none" opacity="0" class="flow-path"/>
+        <!-- Infection zones -->
+        <circle id="z-nmj"   cx="88" cy="305" r="0" fill="rgba(224,85,85,0.08)" stroke="rgba(224,85,85,0.3)" stroke-width="1"/>
+        <circle id="z-sc"    cx="75" cy="156" r="0" fill="rgba(232,145,58,0.08)" stroke="rgba(232,145,58,0.3)" stroke-width="1"/>
+        <circle id="z-brain" cx="75" cy="28"  r="0" fill="rgba(155,120,250,0.08)" stroke="rgba(155,120,250,0.3)" stroke-width="1"/>
+        <ellipse id="brain-inf" cx="75" cy="28" rx="0" ry="0" fill="rgba(155,120,250,0.2)"/>
+        <!-- Salivary glands -->
+        <circle id="sal-l" cx="58" cy="56" r="5" fill="rgba(232,200,58,0)" stroke="rgba(232,200,58,0)" stroke-width="1"/>
+        <circle id="sal-r" cx="92" cy="56" r="5" fill="rgba(232,200,58,0)" stroke="rgba(232,200,58,0)" stroke-width="1"/>
+        <!-- Viral particles container -->
+        <g id="vp-container"></g>
+      </svg>
+    </div>
+
+    <!-- METRICS -->
+    <div style="display:flex;flex-direction:column;gap:8px;flex:1">
+      <div class="info-grid">
+        <div class="info-card"><div class="ic-title">Incubation estimate</div><div class="ic-val" id="incub-val">—</div><div class="ic-sub">days estimated</div></div>
+        <div class="info-card"><div class="ic-title">Transport to CNS</div><div class="ic-val" id="transp-val">—</div><div class="ic-sub" id="transp-sub">days retrograde</div></div>
+        <div class="info-card highlight"><div class="ic-title">Effective velocity</div><div class="ic-val" id="speed-val">200</div><div class="ic-sub">mm/day retrograde (p75 boost applied)</div></div>
+        <div class="info-card"><div class="ic-title">BBB integrity</div><div class="ic-val" id="bbb-val" style="color:var(--green)">~95%</div><div class="ic-sub">P protein suppresses NF-κB</div></div>
+        <div class="info-card"><div class="ic-title">Peripheral spread</div><div class="ic-val" id="periph-spread" style="color:var(--amber)">15%</div><div class="ic-sub">Prob. satellite ganglia seeded (dose-dependent)</div></div>
+      </div>
+
+      <!-- BBB STATUS -->
+      <div class="bbb-status">
+        <div class="bbb-hdr" id="bbb-hdr" style="color:var(--green)">✓ Blood-Brain Barrier Status — INTACT (wild-type RABV)</div>
+        <div style="font-size:9px;color:var(--text2);margin-bottom:8px;line-height:1.5" id="bbb-desc">
+          RABV bypasses the BBB via retrograde axonal transport. P protein blocks IFN-β → NF-κB stays low → claudin-5 maintained intact.
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:4px">
+          <div><div class="nvu-label" style="min-width:0;margin-bottom:2px;font-size:7px">TJ integrity</div><div class="nvu-track"><div class="nvu-bar" id="bbb-tj" style="width:95%;background:var(--green)"></div></div><div class="nvu-val" id="bbb-tj-v">95%</div></div>
+          <div><div class="nvu-label" style="min-width:0;margin-bottom:2px;font-size:7px">AJ integrity</div><div class="nvu-track"><div class="nvu-bar" id="bbb-aj" style="width:97%;background:var(--green)"></div></div><div class="nvu-val" id="bbb-aj-v">97%</div></div>
+          <div><div class="nvu-label" style="min-width:0;margin-bottom:2px;font-size:7px">NF-κB tone</div><div class="nvu-track"><div class="nvu-bar" id="bbb-nfkb" style="width:5%;background:var(--green)"></div></div><div class="nvu-val" id="bbb-nfkb-v">5%</div></div>
+          <div><div class="nvu-label" style="min-width:0;margin-bottom:2px;font-size:7px">MMP activity</div><div class="nvu-track"><div class="nvu-bar" id="bbb-mmp" style="width:5%;background:var(--green)"></div></div><div class="nvu-val" id="bbb-mmp-v">5%</div></div>
+          <div><div class="nvu-label" style="min-width:0;margin-bottom:2px;font-size:7px">MFSD2A</div><div class="nvu-track"><div class="nvu-bar" id="bbb-mfsd2a" style="width:95%;background:var(--green)"></div></div><div class="nvu-val" id="bbb-mfsd2a-v">95%</div></div>
+        </div>
+        <div style="font-size:8px;color:var(--text3);margin-top:8px;line-height:1.4" id="bbb-therapeutic-note">
+          <strong style="color:var(--amber)">Therapeutic implication:</strong> Any drug must cross a <em>healthy intact BBB</em>. Use the BBB Simulator to score fragment delivery.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROTEIN TABLE -->
+  <div class="full-card">
+
+  <!-- ODE OUTCOME + TIMECOURSE (new v7.0) -->
+  <div style="display:grid;grid-template-columns:180px 1fr;gap:10px;margin-bottom:14px">
+    <div class="info-card highlight" id="outcome-card" style="min-height:120px">
+      <div style="font-size:9px;color:var(--text3)">Run simulation to see ODE outcome</div>
+    </div>
+    <div class="full-card" id="ode-timecourse" style="padding:10px 12px;display:none"></div>
+  </div>
+    <div class="card-title" style="color:var(--text3)">RABV Protein Functions & Interface Targets (literature)</div>
+    <table class="ptable" id="protein-table">
+      <thead><tr><th>Protein</th><th>MW / Type</th><th>Primary function</th><th>BBB / Immune impact</th><th>Split-protein target?</th></tr></thead>
+      <tbody>
+        <tr id="pr-G"><td class="pname">G</td><td>~60 kDa · trimer</td><td>nAChR/NCAM/p75NTR binding; endosomal fusion pH≤5.8</td><td class="pbbb">NMJ entry. mGluR2 dysregulation. No direct BBB effect.</td><td style="color:var(--green)">✓ Vaccine target; RVG-29 delivery peptide derived from G</td></tr>
+        <tr id="pr-P"><td class="pname">P</td><td>~33 kDa · dimer</td><td>Polymerase cofactor; dynein LC8 binding (aa 218-225) → retrograde transport</td><td class="pbbb">Blocks TBK1 (Ser179)/STAT1/2 → IFN-β suppressed → NF-κB low → BBB intact</td><td style="color:var(--amber)">⚡ Architecture A — split-nanobody vs P-LC8 + P-TBK1</td></tr>
+        <tr id="pr-N"><td class="pname">N</td><td>~47 kDa · 11-mer</td><td>Forms RNP helix (11-mer rings, RCSB 8FFR); encapsidates RNA</td><td class="pgood">RNA concealment prevents PRR activation. Minimal direct BBB effect.</td><td style="color:var(--amber)">⚡ Architecture B — split-DARPin disrupts 11-mer assembly</td></tr>
+        <tr id="pr-M"><td class="pname">M</td><td>~26 kDa · matrix</td><td>Bridges RNP→envelope; virion budding; NF-κB attenuation</td><td class="pbbb">Attenuates NF-κB → reduces immune-driven BBB disruption. Key virulence determinant.</td><td>— No approved inhibitors; NF-κB axis is indirect target</td></tr>
+        <tr id="pr-L"><td class="pname">L</td><td>~240 kDa · RdRp</td><td>Transcription + replication (5 enzymatic domains); GDN active site motif</td><td>Sustains viral load. Favipiravir targets L but poor CNS penetration.</td><td style="color:var(--text3)">⚠ Architecture C (research) — dominant-negative L fragments</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PHASE DETAIL -->
+  <div class="full-card" id="phase-detail">
+    <div class="card-title" style="color:var(--text3)" id="phase-detail-title">Phase 1 — NMJ Entry</div>
+    <div id="phase-detail-content"></div>
+  </div>
+
+</div>
+</main>
+</div>
+<script src="shared_engine.js"></script>
+<script>
+
+
+// ── RABV SIMULATOR UI  v7.0 — ODE backend integration ────
+let currentDay=0, maxDays=60, isPlaying=false, playTimer=null, p75=true, dose='med', phaseView=0;
+let _lastODE = null;   // full ODE result cache
+const $=id=>document.getElementById(id);
+
+const BITE_COORDS={face:{cx:75,cy:28},hand:{cx:22,cy:100},'upper-arm':{cx:20,cy:75},torso:{cx:75,cy:105},thigh:{cx:62,cy:210},foot:{cx:62,cy:305}};
+
+// ── ODE badge update ──────────────────────────────────────
+function updateODEBadge(source){
+  const b=$('ode-badge'); if(!b)return;
+  if(source==='python_ode'){
+    b.textContent='⬤ ODE engine active';
+    b.style.color='var(--green)';
+    b.style.borderColor='rgba(62,207,142,0.3)';
+    b.style.background='rgba(62,207,142,0.07)';
+    b.title='RABV 9-compartment ODE (rabv_main.py port 8001)';
+  } else {
+    b.textContent='⬤ JS heuristic';
+    b.style.color='var(--amber)';
+    b.style.borderColor='rgba(245,158,11,0.3)';
+    b.style.background='rgba(245,158,11,0.07)';
+    b.title='Fallback: start rabv_main.py on port 8001 for full ODE';
+  }
+}
+
+// ── build params object for RABVEngine ────────────────────
+function getODEParams(){
+  return {
+    location           : $('bite-location').value,
+    depth              : $('bite-depth').value,
+    dose               : dose,
+    wound_washing      : 'none',
+    velocity           : +$('velocity').value,
+    p75Active          : p75,
+    replag             : +$('replag').value,
+    vaccinated         : $('vaccinated').checked,
+    pep                : $('pep').checked,
+    immuno             : $('immuno').checked,
+    'prot-G'           : $('prot-G').checked,
+    'prot-P'           : $('prot-P').checked,
+    'prot-N'           : $('prot-N').checked,
+    'prot-M'           : $('prot-M').checked,
+    'prot-L'           : $('prot-L').checked,
+  };
+}
+
+// ── heuristic params (for JS-only fallback fields) ────────
+function getHeuristicParams(ode){
+  // Derive legacy fields that the old code expected from ODE result
+  const protP=$('prot-P').checked, protM=$('prot-M').checked;
+  const nfkb = ode ? ode.bbb_nfkb_final : (protP?(protM?5:18):55);
+  const tj   = ode ? ode.bbb_tj_final   : (protP&&protM?95:(!protP?60:80));
+  const tl   = SharedEngine.computeRABVTimeline({
+    location:$('bite-location').value, velocity:+$('velocity').value,
+    depth:$('bite-depth').value, dose, p75Active:p75,
+    replag:+$('replag').value, vaccinated:$('vaccinated').checked,
+    pep:$('pep').checked, immuno:$('immuno').checked,
+  });
+  return {...tl, location:$('bite-location').value, depth:$('bite-depth').value,
+    baseVelocity:+$('velocity').value, replag:+$('replag').value,
+    vaccinated:$('vaccinated').checked, pep:$('pep').checked, immuno:$('immuno').checked,
+    protP, protM, nfkb, tj,
+    // ODE overrides when available
+    totalIncubation : ode ? Math.round(ode.incubation_days) : tl.totalIncubation,
+    transportDays   : ode ? ode.transport_days              : tl.transportDays,
+    phaseEnds       : ode ? ode.phase_ends                  : tl.phaseEnds,
+    peripheralSpreadProb: ode ? ode.peripheral_spread_prob  : tl.peripheralSpreadProb,
+  };
+}
+
+// ── main simulate — async, calls ODE backend ─────────────
+function simulate(){
+  const odeParams = getODEParams();
+  SharedEngine.RABVEngine.simulate(odeParams).then(function(ode){
+    _lastODE = ode;
+    updateODEBadge(ode._source || 'js_heuristic');
+    const p = getHeuristicParams(ode);
+
+    maxDays=Math.max(30, (ode.incubation_days||p.totalIncubation) + 10);
+    $('day-slider').max=maxDays;
+    $('incub-val').textContent=(ode.incubation_days||p.totalIncubation).toFixed(1);
+    $('transp-val').textContent=(ode.transport_days||p.transportDays).toFixed(1);
+
+    const effV=Math.round(p.effectiveVelocity||p.velocity);
+    $('transp-sub').textContent=`days (${p.distance}mm @ ${effV}mm/d${p75?' — p75 boost ×'+p.p75Multiplier.toFixed(1):''})`;
+    $('speed-val').textContent=effV;
+
+    const pspEl=$('periph-spread');
+    if(pspEl) pspEl.textContent=Math.round((ode.peripheral_spread_prob||0)*100)+'%';
+
+    $('tp-end').textContent=maxDays;
+    const pe=ode.phase_ends||p.phaseEnds;
+    const tp=[`D${pe[0]?pe[0].toFixed(1):'?'}`,`D${pe[1]?pe[1].toFixed(1):'?'}`,`D${pe[2]?pe[2].toFixed(1):'?'}`];
+    ['tp-1','tp-2','tp-3'].forEach((id,i)=>{const el=$(id);if(el)el.textContent=tp[i];});
+
+    updateBBBStatus(p, ode);
+    updateViz(currentDay, p, ode);
+    updateProteinRows();
+    updatePhaseDetail(phaseView, p);
+    updateOutcomeCard(ode);
+    updateODETimecourse(ode);
+  });
+}
+
+// ── outcome card (new in v7.0) ────────────────────────────
+function updateOutcomeCard(ode){
+  const el=$('outcome-card'); if(!el||!ode) return;
+  const col=ode.outcome==='prevented'?'var(--green)':ode.outcome==='controlled'?'var(--green)':ode.outcome==='salvage'?'var(--amber)':'#f87171';
+  const label={prevented:'Infection Prevented',controlled:'Controlled',salvage:'Salvage (partial)',fatal:'Fatal (untreated)'}[ode.outcome]||ode.outcome;
+  el.innerHTML=`
+    <div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:6px">ODE Outcome</div>
+    <div style="font-family:var(--display);font-size:18px;font-weight:700;color:${col};margin-bottom:4px">${label}</div>
+    <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${col}">${Math.round(ode.outcome_prob*100)}%</div>
+    <div style="font-size:8px;color:var(--text3);margin-top:2px">survival probability</div>
+    <div style="margin-top:8px;display:grid;grid-template-columns:1fr 1fr;gap:4px;font-size:9px;color:var(--text2)">
+      <div>CNS day: <span style="font-family:var(--mono);color:var(--text)">${ode.day_cns_entry}</span></div>
+      <div>Symptoms: <span style="font-family:var(--mono);color:var(--text)">${ode.day_symptoms}</span></div>
+      <div>Peak CNS: <span style="font-family:var(--mono);color:#f87171">${Math.round(ode.peak_cns_burden*100)}%</span></div>
+      <div>Innate pk: <span style="font-family:var(--mono);color:var(--teal)">${Math.round(ode.innate_peak*100)}%</span></div>
+    </div>
+    <div style="font-size:8px;color:var(--text3);margin-top:6px;padding:4px 6px;background:var(--bg3);border-radius:4px">
+      ${ode.engine_version==='heuristic-9.0'?'⚠ JS heuristic — start rabv_main.py for ODE':'✓ '+ode.engine_version+' · '+Math.round(ode.elapsed_ms||0)+'ms'}
+    </div>`;
+}
+
+// ── ODE timecourse SVG chart (new in v7.0) ────────────────
+function updateODETimecourse(ode){
+  const el=$('ode-timecourse'); if(!el||!ode) return;
+  const days=ode.timeline_days||[], bs=ode.timeline_bs||[], lim=ode.timeline_limbic||[];
+  const inn=ode.timeline_innate||[], ada=ode.timeline_adapt||[];
+  const tj=ode.timeline_bbb_tj||[];
+  if(!days.length){el.style.display='none';return;}
+  el.style.display='block';
+
+  const W=el.clientWidth||380, H=90;
+  const maxD=Math.max(...days,1);
+  const x=d=>Math.round((d/maxD)*W);
+  const y=(v,mn,mx)=>Math.round(H - ((v-mn)/(mx-mn||1))*H);
+
+  function polyline(arr, mn, mx, color, opacity){
+    if(!arr.length)return '';
+    const pts=days.map((d,i)=>`${x(d)},${y(arr[i]||0,mn,mx)}`).join(' ');
+    return `<polyline points="${pts}" fill="none" stroke="${color}" stroke-width="1.5" opacity="${opacity}" stroke-linecap="round" stroke-linejoin="round"/>`;
+  }
+
+  el.innerHTML=`<div style="font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;margin-bottom:5px">
+    ODE Time-course — Viral load + Immune
+    <span style="float:right;font-size:7px;color:var(--text3)">${ode._source==='python_ode'?'⬤ ODE':'⬤ JS proxy'}</span>
+  </div>
+  <svg width="100%" height="${H}" viewBox="0 0 ${W} ${H}" style="display:block">
+    <rect width="${W}" height="${H}" fill="rgba(0,0,0,0.2)" rx="4"/>
+    ${polyline(bs,   0, 1, '#9b78fa', 0.9)}
+    ${polyline(lim,  0, 1, '#e05555', 0.85)}
+    ${polyline(inn,  0, 1, '#4f9cf9', 0.70)}
+    ${polyline(ada,  0, 1, '#3ecf8e', 0.70)}
+    ${polyline(tj.map(v=>v/100), 0, 1, '#2dd4bf', 0.55)}
+  </svg>
+  <div style="display:flex;gap:12px;flex-wrap:wrap;font-family:var(--mono);font-size:7px;margin-top:4px">
+    <span style="color:#9b78fa">■ Brainstem</span>
+    <span style="color:#e05555">■ Limbic</span>
+    <span style="color:#4f9cf9">■ Innate</span>
+    <span style="color:#3ecf8e">■ Adaptive</span>
+    <span style="color:#2dd4bf">■ BBB TJ</span>
+  </div>`;
+}
+
+function updateBBBStatus(p, ode){
+  const intact=p.tj>80;
+  const col=intact?'var(--green)':p.tj>60?'var(--amber)':'var(--red)';
+  $('bbb-hdr').style.color=col;
+  $('bbb-val').textContent=p.tj.toFixed(0)+'%';
+  $('bbb-val').style.color=col;
+  const stateLabel=p.protP?(p.protM?'wild-type RABV':'P intact / M absent'):'P protein neutralized';
+  $('bbb-hdr').textContent=(intact?'✓ Blood-Brain Barrier — INTACT':'⚠ Blood-Brain Barrier — COMPROMISED')+' ('+stateLabel+')';
+  setBBBBar('bbb-tj',  p.tj);
+  setBBBBar('bbb-aj',  Math.min(100,p.tj+2));
+  setBBBBar('bbb-nfkb',p.nfkb,true);
+  setBBBBar('bbb-mmp', p.protP?5:30,true);
+  setBBBBar('bbb-mfsd2a',p.tj>80?95:75);
+  if(!p.protP){
+    $('bbb-desc').textContent='P protein NEUTRALIZED or ABSENT: IFN-β production restored → NF-κB rises → mild BBB opening. This is the desired therapeutic effect of Architecture A intraneuronal split-nanobody.';
+  } else {
+    $('bbb-desc').textContent='RABV bypasses the BBB via retrograde axonal transport. P protein blocks IFN-β → NF-κB stays low → claudin-5 maintained intact. The CNS-stage therapeutic paradox.';
+  }
+}
+
+function setBBBBar(id,v,invert=false){
+  const el=$(id),ve=$(id+'-v');
+  if(el)el.style.width=v+'%';
+  if(ve)ve.textContent=v+'%';
+  if(el)el.style.background=invert?(v<20?'var(--green)':v<50?'var(--amber)':'var(--red)'):(v>80?'var(--green)':v>50?'var(--amber)':'var(--red)');
+}
+
+function updateViz(day, p, ode){
+  const totalD = ode ? (ode.incubation_days||p.totalIncubation) : p.totalIncubation;
+  const pct=Math.min(100,(day/(totalD+8))*100);
+  $('tl-fill').style.width=pct+'%';
+  $('tl-day').textContent='Day '+day;
+  $('day-v').textContent='Day '+day;
+  const phaseEnds = ode ? ode.phase_ends : p.phaseEnds;
+  const ph=SharedEngine.getRABVPhase(day,{phaseEnds});
+  $('tl-phase').textContent=ph.label;
+  [0,1,2,3].forEach(i=>{
+    const el=$('ph-'+i);if(el)el.classList.toggle('active',i===ph.phase);
+  });
+  let status='';
+  if(ph.phase===0) status=`G protein binding nAChR at NMJ • endosomal pH ~6.0 triggers G fusion`;
+  else if(ph.phase===1){
+    const cnsDay = ode ? ode.day_cns_entry : (p.localPhase+p.transportDays);
+    const prog=Math.min(1,(day-p.localPhase)/Math.max(0.1,p.transportDays));
+    status=`Dynein-driven • ${Math.round(prog*p.distance)}/${p.distance}mm • P protein: IFN suppressed`;
+    if(ode && ode._source==='python_ode'){
+      const compartments=ode.compartments_final||{};
+      status+=` • ODE: PNS load ${((compartments.pns||0)*100).toFixed(1)}%`;
+    }
+  }
+  else if(ph.phase===2){
+    status=`Brainstem → limbic → hippocampus • Negri body formation`;
+    if(ode && ode._source==='python_ode'){
+      status+=` • BS load ${(((ode.compartments_final||{}).bs||0)*100).toFixed(1)}%`;
+    }
+  }
+  else status=`Anterograde spread to salivary glands • virus in saliva`;
+  $('tl-status').textContent=status;
+  updateAnatomySVG(day,ph.phase,p,ode);
+}
+
+function updateAnatomySVG(day,phase,p,ode){
+  const coord=BITE_COORDS[p.location]||BITE_COORDS.foot;
+  const bm=$('bite-marker'),bi=$('bite-inner'),bl=$('bite-lbl');
+  if(bm){bm.setAttribute('cx',coord.cx);bm.setAttribute('cy',coord.cy);}
+  if(bi){bi.setAttribute('cx',coord.cx);bi.setAttribute('cy',coord.cy);}
+  if(bl){bl.setAttribute('x',coord.cx+8);bl.setAttribute('y',coord.cy+3);}
+  const vp=$('viral-path');if(vp)vp.setAttribute('opacity',phase>=1?'0.5':'0.15');
+  animZone('z-nmj',coord,phase>=0?10:0);
+  animZone('z-sc',{cx:75,cy:156},phase>=1?13:0);
+  animZone('z-brain',{cx:75,cy:28},phase>=2?17:0);
+  const bi2=$('brain-inf');if(bi2){const r=phase>=2?19:0;bi2.setAttribute('rx',r);bi2.setAttribute('ry',r*0.6);}
+  const op=phase>=3?1:0;
+  [$('sal-l'),$('sal-r')].forEach(el=>{if(el){el.setAttribute('fill',`rgba(232,200,58,${op*0.25})`);el.setAttribute('stroke',`rgba(232,200,58,${op*0.7})`);}});
+  renderViralParticles(phase,day,p,coord);
+}
+
+function animZone(id,coord,targetR){
+  const el=$(id);if(!el)return;
+  const cur=parseFloat(el.getAttribute('r')||0);
+  el.setAttribute('r',(cur+(targetR-cur)*0.18).toFixed(1));
+  el.setAttribute('cx',coord.cx);el.setAttribute('cy',coord.cy);
+}
+
+function renderViralParticles(phase,day,p,coord){
+  const c=$('vp-container');if(!c)return;c.innerHTML='';
+  const addP=(x,y,col,r,delay)=>{
+    const circle=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circle.setAttribute('cx',x);circle.setAttribute('cy',y);circle.setAttribute('r',r);
+    circle.setAttribute('fill',col);circle.setAttribute('class','vp');
+    circle.style.animationDelay=delay+'s';c.appendChild(circle);
+    const g=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    g.setAttribute('cx',x);g.setAttribute('cy',y);g.setAttribute('r',r*2.5);
+    g.setAttribute('fill',col);g.setAttribute('opacity','0.12');c.appendChild(g);
+  };
+  if(phase===0){for(let i=0;i<4;i++){const a=(i/4)*Math.PI*2;addP(coord.cx+Math.cos(a)*4,coord.cy+Math.sin(a)*4,'#e05555',2,i*0.3);}}
+  else if(phase===1){
+    const prog=Math.min(1,(day-p.localPhase)/Math.max(0.1,p.transportDays));
+    const pts={foot:[{x:62,y:305},{x:70,y:165},{x:75,y:28}],thigh:[{x:62,y:210},{x:70,y:165},{x:75,y:28}],hand:[{x:22,y:100},{x:67,y:72},{x:75,y:28}],face:[{x:75,y:28},{x:75,y:28}],torso:[{x:75,y:105},{x:75,y:156},{x:75,y:28}],'upper-arm':[{x:20,y:75},{x:67,y:72},{x:75,y:28}]};
+    const pts2=pts[p.location]||pts.foot;
+    for(let i=0;i<5;i++){
+      const t=Math.max(0,Math.min(1,prog-i*0.08));
+      const seg=Math.min(pts2.length-2,Math.floor(t*(pts2.length-1)));
+      const segT=(t*(pts2.length-1))-seg;
+      const p0=pts2[seg],p1=pts2[seg+1]||pts2[pts2.length-1];
+      addP(p0.x+(p1.x-p0.x)*segT,p0.y+(p1.y-p0.y)*segT,'#e05555',2.5,i*0.2);
+    }
+  }
+  else if(phase===2){for(let i=0;i<7;i++){const a=(i/7)*Math.PI*2;addP(75+Math.cos(a)*8,28+Math.sin(a)*5,'#9b78fa',2.2,i*0.15);}addP(75,120,'#e8913a',2.5,0.4);}
+  else{addP(58,56,'#e8c83a',3,0);addP(92,56,'#e8c83a',3,0.3);addP(75,28,'#9b78fa',3,0.1);}
+}
+
+function updateProteinRows(){
+  ['G','P','N','M','L'].forEach(pr=>{
+    const row=$('pr-'+pr),cb=$('prot-'+pr);
+    if(row&&cb)row.style.opacity=cb.checked?'1':'0.35';
+  });
+}
+
+const PHASE_DETAILS=[
+  {title:'Phase 1 — NMJ Entry & Receptor-Mediated Endocytosis',icon:'🦠',color:'var(--red)',
+   content:`<div class="interp"><strong>Glycoprotein G</strong> binds nAChR at the neuromuscular junction (nM affinity — same site as α-bungarotoxin). NCAM and p75<sup>NTR</sup> are co-receptors. Clathrin-mediated endocytosis within seconds of binding. Endosomal acidification (pH 5.8–6.2) triggers G conformational change → membrane fusion → RNP released into cytoplasm.</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+     <div class="info-card"><div class="ic-title">Receptor affinity</div><div class="ic-val">nM</div><div class="ic-sub">G protein Kd for nAChR (α-BTX competition)</div></div>
+     <div class="info-card"><div class="ic-title">Fusion pH threshold</div><div class="ic-val">5.8–6.2</div><div class="ic-sub">Endosomal acidification triggers G loop II insertion</div></div>
+     <div class="info-card"><div class="ic-title">Endocytosis</div><div class="ic-val">CME</div><div class="ic-sub">Clathrin-mediated, &lt;60s after G binding (TIRF microscopy)</div></div>
+     <div class="info-card"><div class="ic-title">Key finding</div><div class="ic-val" style="font-size:12px">RVG-29</div><div class="ic-sub">29-aa peptide from G protein sequence targets nAChR — used as therapeutic delivery ligand</div></div>
+   </div>`},
+  {title:'Phase 2 — Retrograde Axonal Transport (PNS)',icon:'⚡',color:'var(--blue)',
+   content:`<div class="interp">After endosomal fusion, RNP hijacks <strong>dynein motor complexes</strong> via the P protein's LC8 binding motif (aa 218–225). Movement is exclusively retrograde toward soma. p75NTR co-transport boosts speed from ~12 to ~400 mm/day. ~75.9% of transported vesicles are LysoTracker+ (acidic). Schwann cells transiently infected, locally suppressing innate immunity.</div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+     <div class="info-card"><div class="ic-title">Baseline velocity</div><div class="ic-val">12–100</div><div class="ic-sub">mm/day · 0.14–1.2 μm/s (dynein-driven)</div></div>
+     <div class="info-card"><div class="ic-title">p75NTR boost</div><div class="ic-val">~400</div><div class="ic-sub">mm/day with NGF vesicle co-transport</div></div>
+     <div class="info-card"><div class="ic-title">Therapeutic target</div><div class="ic-val" style="font-size:12px">P-LC8</div><div class="ic-sub">Pep2 disrupts P-LC8 interface → transport stalls (Rahmati 2025)</div></div>
+   </div>`},
+  {title:'Phase 3 — CNS Invasion & Replication',icon:'🧠',color:'var(--purple)',
+   content:`<div class="interp">Virus ascends: spinal cord → brainstem → thalamus → limbic system (hippocampus, amygdala, hypothalamus). Spread is <strong>transsynaptic</strong>. Negri bodies (N protein condensates) form in infected neurons. Pathology is unique: <strong>neuronal dysfunction without cell death</strong> — ion channel downregulation blocks action potentials while preserving the axonal network for further spread.</div>
+   <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+     <div class="info-card" style="border-color:var(--border2)"><div class="ic-title">BBB status</div><div class="ic-val" style="color:var(--green)">INTACT</div><div class="ic-sub">P protein maintains IFN suppression → claudin-5 preserved. Healthy BBB = drug locked out.</div></div>
+     <div class="info-card"><div class="ic-title">N protein structure</div><div class="ic-val">11-mer</div><div class="ic-sub">Helical ring (RCSB 8FFR) — target of Architecture B split-DARPin</div></div>
+     <div class="info-card"><div class="ic-title">Replication cycle</div><div class="ic-val">16–24h</div><div class="ic-sub">Per neuron (rhabdovirus kinetics) — split-protein reassembly must beat this</div></div>
+     <div class="info-card"><div class="ic-title">Cell death</div><div class="ic-val" style="color:var(--amber)">Minimal</div><div class="ic-sub">Ion channel dysfunction not lysis — preserves axonal highway for centrifugal spread</div></div>
+   </div>`},
+  {title:'Phase 4 — Centrifugal Spread & Salivary Transmission',icon:'💧',color:'var(--yellow)',
+   content:`<div class="interp">After extensive CNS replication, progeny virions travel <strong>anterogradely</strong> back to periphery. Primary target: salivary glands via parasympathetic fibers (facial + glossopharyngeal nerves). Viral titers in salivary glands can <em>exceed</em> brain tissue. Nerve-cut experiments confirm axonal not hematogenous route. Enables biting transmission.</div>
+   <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:10px">
+     <div class="info-card"><div class="ic-title">Salivary titer</div><div class="ic-val">&gt; Brain</div><div class="ic-sub">Viral load in salivary glands exceeds brain (immunostain + titer data)</div></div>
+     <div class="info-card"><div class="ic-title">Transport direction</div><div class="ic-val">Anterograde</div><div class="ic-sub">Kinesin (soma→terminal) — opposite to initial retrograde spread</div></div>
+     <div class="info-card"><div class="ic-title">Other exit sites</div><div class="ic-val" style="font-size:12px">Cornea</div><div class="ic-sub">Corneal nerves, skin hair follicles — diagnostic utility</div></div>
+   </div>`}
+];
+
+function updatePhaseDetail(idx,p){
+  const d=PHASE_DETAILS[idx];if(!d)return;
+  $('phase-detail-title').textContent=d.title;
+  $('phase-detail').style.borderLeft=`3px solid ${d.color}`;
+  $('phase-detail-content').innerHTML=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px"><div style="font-size:24px">${d.icon}</div></div>${d.content}`;
+  $('phase-detail').querySelector('.card-title').style.color=d.color;
+}
+
+// CONTROLS
+function setDose(v){dose=v;document.querySelectorAll('#dose-btns .sbtn').forEach((b,i)=>b.classList.toggle('on',['low','med','high'][i]===v));simulate();}
+function setP75(v){p75=v;$('p75-on').classList.toggle('on',v);$('p75-off').classList.toggle('on',!v);simulate();}
+function syncV(){$('vel-v').textContent=$('velocity').value+' mm/d';simulate();}
+function syncRL(){$('rl-v').textContent=$('replag').value+'h';simulate();}
+function setDay(d){currentDay=d;$('day-slider').value=d;if(_lastODE){const p=getHeuristicParams(_lastODE);updateViz(d,p,_lastODE);}else simulate();}
+function setPhaseView(i){
+  phaseView=i;[0,1,2,3].forEach(j=>{const el=$('ph-'+j);if(el)el.classList.toggle('active',j===i);});
+  const p=getHeuristicParams(_lastODE);updatePhaseDetail(i,p);
+  const pe=_lastODE?_lastODE.phase_ends:(p.phaseEnds||[0,p.localPhase||2,p.totalIncubation||14,p.totalIncubation+5||19]);
+  const targets=[0, Math.round(pe[0]||0), Math.round(pe[1]||8), Math.round(pe[2]||14)];
+  setDay(targets[i]||0);
+}
+function togglePlay(){
+  isPlaying=!isPlaying;
+  $('play-btn').textContent=isPlaying?'⏸ Pause':'▶ Play';
+  if(isPlaying)doPlay();else clearTimeout(playTimer);
+}
+function doPlay(){
+  if(!isPlaying)return;
+  const spd=+$('spd').value;
+  $('spd-lbl').textContent=spd+'×';
+  currentDay=Math.min(maxDays,currentDay+1);
+  $('day-slider').value=currentDay;
+  // On play, just update viz from cached ODE — don't re-call API every tick
+  if(_lastODE){const p=getHeuristicParams(_lastODE);updateViz(currentDay,p,_lastODE);}
+  if(currentDay>=maxDays){isPlaying=false;$('play-btn').textContent='▶ Play';return;}
+  playTimer=setTimeout(doPlay,Math.max(50,300/spd));
+}
+function resetSim(){isPlaying=false;clearTimeout(playTimer);$('play-btn').textContent='▶ Play';currentDay=0;$('day-slider').value=0;simulate();}
+function jumpCNS(){
+  const cns=_lastODE?Math.round(_lastODE.day_cns_entry):8;
+  setDay(cns);setPhaseView(2);
+}
+$('spd').addEventListener('input',()=>{$('spd-lbl').textContent=$('spd').value+'×';});
+document.addEventListener('DOMContentLoaded',()=>{
+  simulate();
+  // Check ODE backend status on load
+  SharedEngine.RABVEngine.isOnline().then(function(online){
+    updateODEBadge(online?'python_ode':'js_heuristic');
+  });
+});
+
+
+</script>
+</body>
+</html>

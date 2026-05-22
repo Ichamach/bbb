@@ -1,0 +1,1358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Split-Protein Designer — NeuroViral Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0d1119;--bg3:#131a27;--surface:#1a2235;--surface2:#202d42;
+  --border:rgba(155,120,250,0.12);--border2:rgba(155,120,250,0.28);
+  --text:#e8eef8;--text2:#8fa3c0;--text3:#3d5070;
+  --accent:#9b78fa;--accent2:#c4a4ff;
+  --green:#3ecf8e;--amber:#f59e0b;--red:#f87171;
+  --blue:#4f9cf9;--teal:#2dd4bf;--viral:#e05555;
+  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;line-height:1.6;
+  background-image:radial-gradient(ellipse at 80% 20%,rgba(155,120,250,0.05) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(79,140,249,0.04) 0%,transparent 60%);}
+.hdr{border-bottom:1px solid var(--border2);padding:12px 22px;display:flex;align-items:center;gap:12px;background:rgba(7,9,15,0.96);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.hdr-back{font-family:var(--mono);font-size:9px;color:var(--text3);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:4px;transition:all .15s;}
+.hdr-back:hover{color:var(--accent2);border-color:var(--border2);}
+.hdr-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--teal));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:8px;font-weight:700;color:#fff;}
+.hdr-title{font-family:var(--display);font-size:14px;font-weight:700;}
+.hdr-sub{font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:1px;}
+.hdr-badge{margin-left:auto;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:20px;color:var(--accent2);border:1px solid rgba(155,120,250,0.3);background:rgba(155,120,250,0.07);}
+.ode-badge{font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:20px;margin-left:8px;}
+.ode-py{color:var(--green);border:1px solid rgba(62,207,142,.3);background:rgba(62,207,142,.07);}
+.ode-js{color:var(--amber);border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.07);}
+.main{display:grid;grid-template-columns:300px 1fr;min-height:calc(100vh - 53px);}
+.left{border-right:1px solid var(--border);background:var(--bg2);overflow-y:auto;}
+.sect{padding:11px 13px;border-bottom:1px solid var(--border);}
+.sect-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:9px;display:flex;align-items:center;gap:6px;}
+.sect-title::before{content:'';width:8px;height:1px;background:var(--accent);}
+.field{margin-bottom:7px;}
+.fl{display:flex;align-items:center;gap:8px;}
+.flabel{font-size:10px;color:var(--text2);min-width:110px;flex-shrink:0;}
+.fval{font-family:var(--mono);font-size:9px;color:var(--accent2);min-width:40px;text-align:right;}
+input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--surface2);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent);border-radius:50%;cursor:pointer;border:2px solid var(--bg2);}
+select{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:5px;font-family:var(--sans);font-size:11px;outline:none;cursor:pointer;margin-top:3px;}
+.seg{display:flex;gap:3px;flex-wrap:wrap;}
+.sbtn{font-family:var(--mono);font-size:8px;padding:3px 7px;border:1px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
+.sbtn.on{background:rgba(155,120,250,.15);border-color:var(--accent);color:var(--accent2);}
+.sbtn:hover{border-color:var(--accent);color:var(--accent2);}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px;}
+.tog-label{font-size:10px;color:var(--text2);}
+.tog{position:relative;width:26px;height:13px;display:inline-block;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-track{position:absolute;inset:0;background:var(--surface2);border-radius:7px;cursor:pointer;transition:background .2s;}
+.tog input:checked+.tog-track{background:var(--accent);}
+.tog-thumb{position:absolute;top:2px;left:2px;width:9px;height:9px;background:var(--bg);border-radius:50%;transition:transform .2s;pointer-events:none;}
+.tog input:checked~.tog-thumb{transform:translateX(13px);}
+.score-btn{width:100%;margin-top:8px;padding:9px;background:rgba(155,120,250,.15);border:1px solid var(--accent);border-radius:6px;color:var(--accent2);font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.05em;transition:all .15s;}
+.score-btn:hover{background:rgba(155,120,250,.28);}
+.mc-btn{width:100%;margin-top:5px;padding:7px;background:rgba(45,212,191,.08);border:1px solid rgba(45,212,191,.3);border-radius:6px;color:var(--teal);font-family:var(--mono);font-size:10px;cursor:pointer;letter-spacing:.05em;transition:all .15s;}
+.mc-btn:hover{background:rgba(45,212,191,.18);}
+.right{overflow-y:auto;padding:14px 18px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:13px 15px;margin-bottom:12px;}
+.card-accent{border-color:var(--border2);border-left:3px solid var(--accent);}
+.card-green{border-left:3px solid var(--green);}
+.card-amber{border-left:3px solid var(--amber);}
+.card-red{border-left:3px solid var(--red);}
+.card-teal{border-left:3px solid var(--teal);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.g4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.ctitle{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:9px;}
+.mc-box{background:var(--bg3);border-radius:7px;padding:9px 11px;text-align:center;}
+.mc-label{font-size:8px;color:var(--text3);margin-bottom:3px;}
+.mc-val{font-family:var(--mono);font-size:20px;font-weight:700;margin-bottom:2px;}
+.mc-sub{font-size:8px;color:var(--text3);line-height:1.3;}
+.arch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px;}
+.arch-card{background:var(--bg3);border:1px solid var(--border);border-radius:8px;padding:11px;cursor:pointer;transition:all .2s;position:relative;}
+.arch-card.selected{border-color:var(--accent);background:rgba(155,120,250,.08);}
+.arch-card:hover:not(.selected){border-color:rgba(155,120,250,0.3);}
+.arch-rank{font-family:var(--mono);font-size:18px;font-weight:700;margin-bottom:2px;}
+.arch-id{font-family:var(--mono);font-size:8px;color:var(--text3);}
+.arch-name{font-size:9px;color:var(--text);font-weight:600;margin:3px 0;line-height:1.3;}
+.arch-score{font-family:var(--mono);font-size:15px;font-weight:700;margin-top:4px;}
+.arch-band{font-family:var(--mono);font-size:8px;color:var(--text3);margin-top:1px;}
+.arch-bar-track{height:3px;background:var(--surface);border-radius:2px;overflow:visible;margin-top:5px;position:relative;}
+.arch-bar-fill{height:100%;border-radius:2px;transition:width .5s;}
+.arch-conf{font-size:7px;margin-top:3px;font-family:var(--mono);}
+.conf-badge{display:inline-block;font-family:var(--mono);font-size:8px;padding:2px 7px;border-radius:10px;}
+.conf-high    {background:rgba(62,207,142,.15);color:var(--green);border:1px solid rgba(62,207,142,.25);}
+.conf-medium  {background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+.conf-low     {background:rgba(248,113,113,.15);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.conf-very_low{background:rgba(155,120,250,.15);color:var(--accent2);border:1px solid rgba(155,120,250,.25);}
+.unc-strip{display:flex;align-items:center;gap:6px;margin-top:6px;font-size:9px;}
+.unc-pess{font-family:var(--mono);color:#f87171;}
+.unc-exp{font-family:var(--mono);color:var(--text);font-weight:700;font-size:13px;}
+.unc-opt{font-family:var(--mono);color:var(--green);}
+.unc-bar{flex:1;height:6px;background:var(--surface);border-radius:3px;position:relative;overflow:visible;}
+.unc-bar-fill{position:absolute;height:100%;border-radius:3px;}
+.unc-marker{position:absolute;top:-2px;width:3px;height:10px;border-radius:2px;background:#fff;}
+.mc-rank-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.mc-arch-id{font-family:var(--mono);font-size:11px;font-weight:700;min-width:16px;}
+.mc-rank-bar-wrap{flex:1;height:16px;background:var(--surface);border-radius:4px;overflow:hidden;}
+.mc-rank-bar{height:100%;border-radius:4px;transition:width .6s;display:flex;align-items:center;padding-left:6px;}
+.mc-rank-pct{font-family:var(--mono);font-size:9px;color:#000;font-weight:700;}
+.mc-rank-nums{font-family:var(--mono);font-size:8px;color:var(--text3);min-width:120px;text-align:right;}
+.wfall-step{display:flex;align-items:center;gap:7px;margin-bottom:6px;}
+.wfall-num{width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:7px;font-weight:700;color:#000;flex-shrink:0;}
+.wfall-label{flex:1;font-size:9px;color:var(--text2);}
+.wfall-pct{font-family:var(--mono);font-size:9px;min-width:30px;text-align:right;}
+.wfall-bar-wrap{width:55px;height:4px;background:var(--surface);border-radius:2px;overflow:hidden;flex-shrink:0;}
+.wfall-bar{height:100%;border-radius:2px;}
+.wfall-running{font-family:var(--mono);font-size:8px;color:var(--text3);min-width:38px;text-align:right;}
+.explain-driver{display:flex;align-items:flex-start;gap:8px;padding:5px 0;border-bottom:1px solid var(--border);}
+.explain-driver:last-child{border-bottom:none;}
+.expl-icon{font-size:11px;flex-shrink:0;margin-top:1px;}
+.expl-label{font-family:var(--mono);font-size:9px;color:var(--text);margin-bottom:1px;}
+.expl-note{font-size:9px;color:var(--text3);line-height:1.4;}
+.expl-val{font-family:var(--mono);font-size:11px;font-weight:700;min-width:32px;text-align:right;flex-shrink:0;}
+.mech-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px;}
+.mech-row:last-child{border-bottom:none;}
+.mech-key{color:var(--text2);}
+.mech-val{font-family:var(--mono);color:var(--text);}
+.mfg-grade{font-family:var(--mono);font-size:32px;font-weight:700;line-height:1;}
+.risk-flag{display:flex;align-items:flex-start;gap:7px;padding:5px 0;border-bottom:1px solid var(--border);}
+.risk-flag:last-child{border-bottom:none;}
+.risk-sev{font-size:7px;font-family:var(--mono);padding:1px 5px;border-radius:8px;flex-shrink:0;margin-top:1px;}
+.sev-high{background:rgba(248,113,113,.15);color:#f87171;}
+.sev-medium{background:rgba(245,158,11,.15);color:var(--amber);}
+.sev-low{background:rgba(62,207,142,.15);color:var(--green);}
+.sc-table{width:100%;border-collapse:collapse;font-size:9px;}
+.sc-table th{font-family:var(--mono);font-size:7px;color:var(--text3);letter-spacing:.08em;text-transform:uppercase;padding:5px 7px;text-align:left;border-bottom:1px solid var(--border);}
+.sc-table td{padding:5px 7px;border-bottom:1px solid rgba(255,255,255,0.04);color:var(--text2);}
+.sc-table tr:last-child td{border-bottom:none;}
+.rec-box{background:linear-gradient(135deg,rgba(155,120,250,0.08),rgba(45,212,191,0.05));border:1px solid var(--border2);border-radius:10px;padding:16px;}
+.rec-arch{font-family:var(--display);font-size:28px;font-weight:800;margin-bottom:4px;}
+.rec-name{font-family:var(--mono);font-size:10px;color:var(--text2);margin-bottom:12px;}
+.rec-section{margin-bottom:10px;}
+.rec-section-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:5px;}
+.rec-point{font-size:10px;color:var(--text2);margin-bottom:3px;padding-left:10px;position:relative;line-height:1.5;}
+.rec-point::before{content:'›';position:absolute;left:0;color:var(--accent);}
+.frag-card{background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:11px;}
+.frag-num{font-family:var(--mono);font-size:8px;color:var(--text3);margin-bottom:4px;}
+.frag-name{font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:4px;}
+.frag-props{font-size:9px;color:var(--text2);line-height:1.7;white-space:pre-line;}
+.frag-bbb{font-family:var(--mono);font-size:22px;font-weight:700;margin-top:5px;}
+.frag-route{font-size:8px;color:var(--text3);margin-top:2px;}
+.tabs{display:flex;gap:2px;margin-bottom:12px;border-bottom:1px solid var(--border);overflow-x:auto;}
+.tab{font-family:var(--mono);font-size:9px;padding:6px 12px;border:none;background:none;color:var(--text3);cursor:pointer;border-bottom:2px solid transparent;transition:all .15s;white-space:nowrap;}
+.tab.active{color:var(--accent2);border-bottom-color:var(--accent);}
+.tab:hover:not(.active){color:var(--text2);}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
+.host-tag{font-size:8px;padding:2px 7px;border-radius:10px;font-family:var(--mono);display:inline-block;margin:2px;}
+.ht-warn{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+.ht-good{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.25);}
+.ht-bad{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.ht-info{background:rgba(79,156,249,.12);color:var(--blue);border:1px solid rgba(79,156,249,.25);}
+.sys-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:10px;}
+.sys-card{background:var(--bg3);border:1px solid var(--border);border-radius:5px;padding:7px;text-align:center;}
+.sys-card.selected{border-color:var(--accent);}
+.sys-card.bad{border-color:rgba(248,113,113,.3);}
+.sys-name{font-family:var(--mono);font-size:7px;color:var(--text2);margin-bottom:3px;line-height:1.3;}
+.sys-kd{font-family:var(--mono);font-size:11px;font-weight:700;margin-bottom:2px;}
+.sys-note{font-size:7px;color:var(--text3);line-height:1.3;}
+.tornado-row{display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:9px;}
+.tornado-label{min-width:180px;text-align:right;color:var(--text2);}
+.tornado-axis{width:1px;height:14px;background:var(--text3);flex-shrink:0;}
+.tornado-bar-neg{height:8px;border-radius:2px 0 0 2px;transition:width .4s;}
+.tornado-bar-pos{height:8px;border-radius:0 2px 2px 0;transition:width .4s;}
+.tornado-delta{font-family:var(--mono);min-width:40px;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px;}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="homepage.html">← Home</a>
+  <div class="hdr-logo">SP</div>
+  <div>
+    <div class="hdr-title">Split-Protein Designer</div>
+    <div class="hdr-sub">Monte Carlo ranking · uncertainty propagation · mechanism models · manufacturing · safety · explainability</div>
+  </div>
+  <div style="margin-left:auto;display:flex;align-items:center;gap:8px">
+    <span id="ode-badge" class="ode-badge ode-js">JS Engine</span>
+    <span class="hdr-badge">Module 03 · v2.0</span>
+  </div>
+</header>
+
+<div class="main">
+<aside class="left">
+  <div class="sect">
+    <div class="sect-title">Architecture</div>
+    <div class="seg" id="arch-btns" style="gap:4px">
+      <button class="sbtn on" onclick="selectArch('A')" style="flex:1">A: Anti-P</button>
+      <button class="sbtn"    onclick="selectArch('B')" style="flex:1">B: Anti-N</button>
+      <button class="sbtn"    onclick="selectArch('C')" style="flex:1">C: Anti-L</button>
+      <button class="sbtn"    onclick="selectArch('D')" style="flex:1">D: Tri</button>
+    </div>
+    <div id="arch-desc-box" style="margin-top:7px;font-size:9px;color:var(--text3);padding:6px;background:var(--bg3);border-radius:5px;line-height:1.5"></div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-title">Split System</div>
+    <select id="split-sys" onchange="updatePanel()">
+      <option value="split_intein_npu">Npu DnaE intein — BEST (t½~1s, irreversible)</option>
+      <option value="split_gfp">Split-GFP (Kd &lt;1 nM, irreversible)</option>
+      <option value="fkbp_frb">FKBP/FRB + Rapamycin (conditional)</option>
+      <option value="leucine_zipper">Leucine Zipper (Kd ~100 nM)</option>
+      <option value="nanobit">NanoBiT ⚠ (Kd 190μM — NOT RECOMMENDED)</option>
+    </select>
+    <div id="sys-note" style="margin-top:5px;font-size:9px;color:var(--text3);line-height:1.4;padding:5px;background:var(--bg3);border-radius:4px"></div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-title">Infection &amp; Delivery</div>
+    <div class="field"><div class="fl"><span class="flabel">Bite distance (mm)</span><input type="range" id="bite-mm" min="100" max="1400" value="1200" step="50" oninput="syncV('bite-mm','bite-v','')"><span class="fval" id="bite-v">1200</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Nerve velocity</span><input type="range" id="velocity" min="50" max="400" value="200" step="10" oninput="syncV('velocity','vel-v',' mm/d')"><span class="fval" id="vel-v">200 mm/d</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Treatment day</span><input type="range" id="treat-day" min="0" max="20" value="0" step="1" oninput="syncV('treat-day','treat-v','',true)"><span class="fval" id="treat-v">Day 0</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Intracellular conc.</span><input type="range" id="conc-nm" min="0.1" max="100" value="5" step="0.1" oninput="syncV('conc-nm','conc-v',' nM',false,true)"><span class="fval" id="conc-v">5.0 nM</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Viral burden</span><input type="range" id="viral-burden" min="1" max="90" value="30" step="1" oninput="syncV('viral-burden','burden-v','%')"><span class="fval" id="burden-v">30%</span></div></div>
+    <div class="field" style="margin-top:6px">
+      <span style="font-size:10px;color:var(--text2);display:block;margin-bottom:4px">Brain region</span>
+      <div class="seg" id="region-btns">
+        <button class="sbtn"    onclick="setRegion('cortex')">Cortex</button>
+        <button class="sbtn on" onclick="setRegion('hippocampus')">Hippo</button>
+        <button class="sbtn"    onclick="setRegion('brainstem')">Brainstem</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-title">Host State</div>
+    <div class="tog-row"><span class="tog-label">Immunocompromised</span><label class="tog"><input type="checkbox" id="host-immuno" onchange="updatePanel()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">High neuroinflammation</span><label class="tog"><input type="checkbox" id="host-inflam" onchange="updatePanel()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">Brainstem-dominant</span><label class="tog"><input type="checkbox" id="host-brainstem" onchange="updatePanel()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">Prior vaccination</span><label class="tog"><input type="checkbox" id="host-vaccine" onchange="updatePanel()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="field" style="margin-top:4px">
+      <span style="font-size:10px;color:var(--text2);display:block;margin-bottom:3px">Viral load</span>
+      <div class="seg" id="vload-btns">
+        <button class="sbtn" onclick="setVLoad('low')">Low</button>
+        <button class="sbtn on" onclick="setVLoad('med')">Med</button>
+        <button class="sbtn" onclick="setVLoad('high')">High</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="sect">
+    <div class="sect-title">Fragment Overrides</div>
+    <div class="field"><div class="fl"><span class="flabel">F1 MW (Da)</span><input type="range" id="f1-mw" min="1000" max="20000" value="8200" step="100" oninput="syncV('f1-mw','f1-mw-v','')"><span class="fval" id="f1-mw-v">8200</span></div></div>
+    <div class="tog-row"><span class="tog-label">F1 TfR-RMT conjugate</span><label class="tog"><input type="checkbox" id="f1-rmt" checked onchange="updatePanel()"><div class="tog-track" style="background:var(--accent)"></div><div class="tog-thumb" style="transform:translateX(13px)"></div></label></div>
+    <div class="field"><div class="fl"><span class="flabel">F2 MW (Da)</span><input type="range" id="f2-mw" min="1000" max="20000" value="11400" step="100" oninput="syncV('f2-mw','f2-mw-v','')"><span class="fval" id="f2-mw-v">11400</span></div></div>
+    <div class="tog-row"><span class="tog-label">F2 RVG-29 conjugate</span><label class="tog"><input type="checkbox" id="f2-rvg" checked onchange="updatePanel()"><div class="tog-track" style="background:var(--accent)"></div><div class="tog-thumb" style="transform:translateX(13px)"></div></label></div>
+  </div>
+
+  <div style="padding:11px 13px">
+    <button class="score-btn" id="score-btn" onclick="updatePanel()">▶ SCORE ALL ARCHITECTURES</button>
+    <button class="mc-btn"   id="mc-btn"    onclick="runMCAnalysis()">⚄ RUN MONTE CARLO (n=500)</button>
+    <div id="mc-status" style="font-size:8px;color:var(--text3);margin-top:5px;font-family:var(--mono);text-align:center"></div>
+  </div>
+</aside>
+
+<main class="right">
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('tab-overview')">Overview</button>
+    <button class="tab" onclick="showTab('tab-montecarlo')">Monte Carlo</button>
+    <button class="tab" onclick="showTab('tab-detail')">Mechanism</button>
+    <button class="tab" onclick="showTab('tab-coloc')">Co-localization</button>
+    <button class="tab" onclick="showTab('tab-window')">Window</button>
+    <button class="tab" onclick="showTab('tab-mfg')">Mfg + Safety</button>
+    <button class="tab" onclick="showTab('tab-scenarios')">Scenarios</button>
+    <button class="tab" onclick="showTab('tab-recommend')">Recommendation</button>
+  </div>
+
+  <!-- OVERVIEW -->
+  <div class="tab-panel active" id="tab-overview">
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)">Architecture Comparison — Ranked with Uncertainty Bands</div>
+      <div class="arch-grid" id="arch-grid">
+        <div style="text-align:center;color:var(--text3);font-size:10px;grid-column:1/-1;padding:16px">Click "SCORE ALL ARCHITECTURES" to rank</div>
+      </div>
+      <div id="host-modifier-tags" style="margin-top:8px;min-height:18px;display:flex;flex-wrap:wrap;gap:4px"></div>
+    </div>
+    <div class="g4">
+      <div class="mc-box"><div class="mc-label">Final Score</div><div class="mc-val" id="final-score" style="color:var(--accent2)">—</div><div class="mc-sub">weighted composite</div></div>
+      <div class="mc-box"><div class="mc-label">Overall Prob</div><div class="mc-val" id="overall-score" style="color:var(--accent2)">—</div><div class="mc-sub">joint delivery chain</div></div>
+      <div class="mc-box"><div class="mc-label">Mechanism</div><div class="mc-val" id="mech-score" style="color:var(--accent2)">—</div><div class="mc-sub">efficacy once inside</div></div>
+      <div class="mc-box"><div class="mc-label">Window</div><div class="mc-val" id="window-score" style="color:var(--accent2)">—</div><div class="mc-sub" id="window-phase">—</div></div>
+    </div>
+    <div class="card" id="unc-card" style="margin-bottom:12px">
+      <div class="ctitle">Uncertainty-Adjusted Score Range</div>
+      <div id="unc-display"></div>
+    </div>
+    <div class="g2">
+      <div class="frag-card"><div class="frag-num">FRAGMENT 1</div><div class="frag-name" id="f1-name">—</div><div class="frag-props" id="f1-props">—</div><div class="frag-bbb" id="f1-bbb-score">—</div><div class="frag-route" id="f1-route">—</div></div>
+      <div class="frag-card"><div class="frag-num">FRAGMENT 2</div><div class="frag-name" id="f2-name">—</div><div class="frag-props" id="f2-props">—</div><div class="frag-bbb" id="f2-bbb-score">—</div><div class="frag-route" id="f2-route">—</div></div>
+    </div>
+    <div id="tripartite-note" style="display:none;background:rgba(155,120,250,0.08);border:1px solid rgba(155,120,250,0.2);border-radius:6px;padding:8px 10px;font-size:9px;color:var(--accent2);margin-bottom:12px;line-height:1.5"></div>
+    <div class="g2">
+      <div class="card card-green"><div class="ctitle" style="color:var(--green)">Strengths</div><div id="strengths-list" style="font-size:10px;color:var(--text2);line-height:1.8"></div></div>
+      <div class="card card-red"><div class="ctitle" style="color:#f87171">Weaknesses</div><div id="weaknesses-list" style="font-size:10px;color:var(--text2);line-height:1.8"></div></div>
+    </div>
+  </div>
+
+  <!-- MONTE CARLO -->
+  <div class="tab-panel" id="tab-montecarlo">
+    <div class="card card-teal">
+      <div class="ctitle" style="color:var(--teal)">Monte Carlo Ranking — Probability Architecture Wins</div>
+      <div style="font-size:9px;color:var(--text2);margin-bottom:12px;line-height:1.6">
+        Each bar = fraction of 500 simulated patients where this architecture ranks #1. Biological variability in BBB transporter expression (±30%), co-localization (±35%), reassembly (±20%), mechanism (±20%), and window (±25%) are sampled independently per simulation.
+      </div>
+      <div id="mc-rank-display" style="padding:4px 0">
+        <div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">Run Monte Carlo from the sidebar</div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Per-Architecture Score Distribution (p10 / expected / p90)</div>
+      <div id="mc-box-plot"></div>
+    </div>
+    <div class="card card-amber">
+      <div class="ctitle" style="color:var(--amber)">Uncertainty Breakdown — What Drives Variance?</div>
+      <div id="mc-unc-breakdown"></div>
+    </div>
+  </div>
+
+  <!-- MECHANISM -->
+  <div class="tab-panel" id="tab-detail">
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)" id="detail-title">Architecture A — Probability Chain</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:10px">Cumulative product of all probability components.</div>
+      <div id="chain-panel"><div style="color:var(--text3);font-size:10px;padding:20px;text-align:center">Score an architecture first</div></div>
+    </div>
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)" id="mech-title">Architecture A — Mechanistic Efficacy Model</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:10px" id="mech-subtitle"></div>
+      <div id="mech-panel"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="color:var(--accent)">Split System Comparison</div>
+      <div class="sys-grid" id="sys-grid"></div>
+      <div id="sys-interp" style="font-size:10px;color:var(--text2);line-height:1.6;padding:8px;background:var(--bg3);border-radius:5px"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="color:var(--accent)">RABV Target Interface</div>
+      <div id="target-detail"></div>
+    </div>
+  </div>
+
+  <!-- CO-LOCALIZATION -->
+  <div class="tab-panel" id="tab-coloc">
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)">Co-localization Model — The Hard Part</div>
+      <div style="font-size:10px;color:var(--text2);line-height:1.6;margin-bottom:10px">Both fragments must cross the BBB, reach the <em>same infected neuron</em>, enter the <em>same compartment</em>, arrive within each other's intracellular half-life, and be present at adequate concentration simultaneously. Every step multiplies.</div>
+      <div class="g3" style="margin-bottom:14px">
+        <div class="mc-box"><div class="mc-label">Raw co-delivery</div><div class="mc-val" id="raw-codeliv">—</div><div class="mc-sub">min(F1,F2)×region×cell entry</div></div>
+        <div class="mc-box"><div class="mc-label">After penalties</div><div class="mc-val" id="pen-coloc">—</div><div class="mc-sub">t½ + async + degradation</div></div>
+        <div class="mc-box"><div class="mc-label">Worst factor</div><div class="mc-val" id="coloc-bottleneck" style="font-size:11px">—</div><div class="mc-sub">limits co-localization</div></div>
+      </div>
+      <div id="coloc-breakdown-rows"></div>
+    </div>
+    <div class="card"><div class="ctitle" style="color:var(--accent)">Co-localization Waterfall</div><div id="coloc-waterfall"></div></div>
+    <div class="card card-amber"><div class="ctitle" style="color:var(--amber)">How to Improve</div><div id="coloc-advice" style="font-size:10px;color:var(--text2);line-height:1.7"></div></div>
+  </div>
+
+  <!-- WINDOW -->
+  <div class="tab-panel" id="tab-window">
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)">Therapeutic Window — 4-Phase Model</div>
+      <div class="g4" id="window-timeline-grid" style="margin-bottom:12px"></div>
+      <div style="height:12px;background:var(--surface);border-radius:5px;position:relative;overflow:visible;margin-bottom:8px" id="window-wrap">
+        <div id="wbar-pns"   style="position:absolute;height:100%;border-radius:3px;background:rgba(62,207,142,0.4);transition:all .4s"></div>
+        <div id="wbar-ecns"  style="position:absolute;height:100%;border-radius:3px;background:rgba(245,158,11,0.4);transition:all .4s"></div>
+        <div id="wbar-sym"   style="position:absolute;height:100%;border-radius:3px;background:rgba(248,113,113,0.4);transition:all .4s"></div>
+        <div id="wbar-treat" style="position:absolute;top:-5px;width:3px;height:22px;background:#fff;border-radius:2px;transition:left .4s"></div>
+      </div>
+      <div style="display:flex;gap:10px;font-size:8px;font-family:var(--mono);color:var(--text3);flex-wrap:wrap;margin-bottom:10px">
+        <span style="color:rgba(62,207,142,.8)">■ Pre-CNS intercept</span>
+        <span style="color:rgba(245,158,11,.8)">■ Early CNS control</span>
+        <span style="color:rgba(248,113,113,.8)">■ Late salvage</span>
+        <span style="color:#fff">│ Treatment day</span>
+      </div>
+      <div id="window-verdict" style="padding:10px;background:var(--bg3);border-radius:6px;font-size:10px;color:var(--text2);line-height:1.6"></div>
+    </div>
+    <div class="card"><div class="ctitle" style="color:var(--accent)">Fragment Delivery Timeline</div><div id="delivery-timeline" style="font-size:10px;color:var(--text2);line-height:1.7"></div></div>
+    <div class="card"><div class="ctitle" style="color:var(--accent)">Architecture Best-Window Comparison</div><div id="arch-window-compare"></div></div>
+  </div>
+
+  <!-- MFG + SAFETY -->
+  <div class="tab-panel" id="tab-mfg">
+    <div class="g2">
+      <div class="card card-accent">
+        <div class="ctitle" style="color:var(--accent)">Manufacturing Feasibility</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+          <div><div class="mfg-grade" id="mfg-grade" style="color:var(--green)">—</div><div style="font-size:8px;color:var(--text3);font-family:var(--mono)">GMP grade</div></div>
+          <div style="flex:1"><div class="mc-val" id="mfg-score" style="color:var(--green)">—</div><div style="font-size:8px;color:var(--text3)">/100 feasibility</div><div id="mfg-note" style="font-size:9px;color:var(--text3);margin-top:3px;line-height:1.4"></div></div>
+        </div>
+        <div id="mfg-subScores"></div>
+        <div id="mfg-limiting" style="margin-top:8px;font-size:9px;padding:6px 8px;background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:5px;color:var(--amber)"></div>
+      </div>
+      <div class="card card-accent">
+        <div class="ctitle" style="color:var(--accent)">Safety Profile</div>
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px">
+          <div><div class="mc-val" id="safety-score" style="font-size:28px;font-weight:700">—</div><div style="font-size:8px;color:var(--text3)">/100 (higher=safer)</div></div>
+          <div><span id="safety-level" class="conf-badge conf-medium">—</span><div id="safety-note" style="font-size:9px;color:var(--text3);margin-top:5px;line-height:1.4;max-width:160px"></div></div>
+        </div>
+        <div id="safety-flags"></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="ctitle">Translational Rank — Scientific × Manufacturing × Safety</div>
+      <div id="translational-rank"></div>
+    </div>
+  </div>
+
+  <!-- SCENARIOS -->
+  <div class="tab-panel" id="tab-scenarios">
+    <div class="card card-accent">
+      <div class="ctitle" style="color:var(--accent)">11 Clinical Scenarios — Architecture Winner per Condition</div>
+      <div style="font-size:10px;color:var(--text2);margin-bottom:10px;line-height:1.6">Each row is a distinct patient/clinical situation. The winning architecture and score spread are shown.</div>
+      <div id="scenario-table-wrap"></div>
+    </div>
+    <div class="card">
+      <div class="ctitle" style="color:var(--accent)">Tornado Chart — Sensitivity to Parameter Changes</div>
+      <div style="font-size:9px;color:var(--text3);margin-bottom:8px">Effect on final score for selected architecture.</div>
+      <div id="tornado-chart"></div>
+    </div>
+  </div>
+
+  <!-- RECOMMENDATION -->
+  <div class="tab-panel" id="tab-recommend">
+    <div id="recommendation-box">
+      <div style="color:var(--text3);font-size:10px;padding:30px;text-align:center">Score architectures to generate recommendation</div>
+    </div>
+    <div id="explain-box" style="display:none;margin-top:12px">
+      <div class="card card-green"><div class="ctitle" style="color:var(--green)">Why It Works — Drivers</div><div id="explain-drivers"></div></div>
+      <div class="card card-red"><div class="ctitle" style="color:#f87171">What's Limiting It</div><div id="explain-limiters"></div></div>
+      <div class="card card-amber"><div class="ctitle" style="color:var(--amber)">Actionable Next Steps</div><div id="explain-upgrades" style="font-size:10px;color:var(--text2);line-height:1.7"></div></div>
+    </div>
+  </div>
+</main>
+</div>
+
+<script src="shared_engine.js"></script>
+<script>
+'use strict';
+
+// ── STATE ─────────────────────────────────────────────────
+var currentArch   = 'A';
+var currentRegion = 'hippocampus';
+var currentVLoad  = 'med';
+var lastAllResults = null;   // array of 4 scored architectures (JS camelCase)
+var lastResult     = null;   // current arch result
+var lastMC         = null;
+
+// ── SHORTCUTS ─────────────────────────────────────────────
+function $(id){ return document.getElementById(id); }
+function setTxt(id, v){ var el=$(id); if(el) el.textContent = v||'—'; }
+function setHTML(id, v){ var el=$(id); if(el) el.innerHTML = v||''; }
+
+// Score colour
+function scoreColor(v){
+  return v>=65?'var(--green)':v>=40?'var(--accent2)':v>=20?'var(--amber)':'#f87171';
+}
+
+// ── TABS ──────────────────────────────────────────────────
+function showTab(id){
+  document.querySelectorAll('.tab-panel').forEach(function(p){ p.classList.remove('active'); });
+  document.querySelectorAll('.tab').forEach(function(t){ t.classList.remove('active'); });
+  var panel = $(id);
+  if(panel) panel.classList.add('active');
+  // activate the matching button
+  document.querySelectorAll('.tab').forEach(function(t){
+    if(t.getAttribute('onclick') && t.getAttribute('onclick').indexOf(id)>=0)
+      t.classList.add('active');
+  });
+}
+
+// ── SIDEBAR CONTROLS ──────────────────────────────────────
+function syncV(rangeId, valId, suffix, isDay, isFloat){
+  var v = parseFloat($(rangeId).value);
+  var display = isDay ? 'Day '+v : (isFloat ? v.toFixed(1)+suffix : v+suffix);
+  setTxt(valId, display);
+  updatePanel();
+}
+
+function selectArch(id){
+  currentArch = id;
+  document.querySelectorAll('#arch-btns .sbtn').forEach(function(b){ b.classList.remove('on'); });
+  var btns = document.querySelectorAll('#arch-btns .sbtn');
+  ['A','B','C','D'].forEach(function(a,i){ if(a===id) btns[i].classList.add('on'); });
+  // update desc box
+  var arch = SharedEngine.ARCHITECTURES[id];
+  if(arch) setHTML('arch-desc-box', '<b style="color:var(--accent2)">'+arch.name+'</b><br>'+arch.desc);
+  updatePanel();
+}
+
+function setRegion(r){
+  currentRegion = r;
+  document.querySelectorAll('#region-btns .sbtn').forEach(function(b){ b.classList.remove('on'); });
+  event.target.classList.add('on');
+  updatePanel();
+}
+
+function setVLoad(v){
+  currentVLoad = v;
+  document.querySelectorAll('#vload-btns .sbtn').forEach(function(b){ b.classList.remove('on'); });
+  event.target.classList.add('on');
+  updatePanel();
+}
+
+// ── READ PARAMS FROM SIDEBAR ──────────────────────────────
+function getGlobalParams(){
+  return {
+    region      : currentRegion,
+    biteMM      : parseFloat($('bite-mm').value),
+    velocity    : parseFloat($('velocity').value),
+    treatDay    : parseFloat($('treat-day').value),
+    concNM      : parseFloat($('conc-nm').value),
+    viralBurden : parseFloat($('viral-burden').value) / 100,
+    splitSystem : $('split-sys').value,
+    hostState   : {
+      immunocompromised: $('host-immuno').checked,
+      highInflammation : $('host-inflam').checked,
+      brainstemDominant: $('host-brainstem').checked,
+      priorVaccination : $('host-vaccine').checked,
+      viralLoad        : currentVLoad,
+    },
+  };
+}
+
+function getFragOverrides(){
+  return {
+    f1: { mw: parseFloat($('f1-mw').value), rmt: $('f1-rmt').checked },
+    f2: { mw: parseFloat($('f2-mw').value), rvg: $('f2-rvg').checked },
+  };
+}
+
+// ── ODE BADGE ─────────────────────────────────────────────
+function updateODEBadge(online){
+  var b = $('ode-badge');
+  if(!b) return;
+  if(online){
+    b.textContent = 'Python ODE';
+    b.className   = 'ode-badge ode-py';
+  } else {
+    b.textContent = 'JS Engine';
+    b.className   = 'ode-badge ode-js';
+  }
+}
+
+async function checkODE(){
+  try {
+    var r = await fetch('http://localhost:8002/health', {signal: AbortSignal.timeout(1500)});
+    updateODEBadge(r.ok);
+  } catch(e){ updateODEBadge(false); }
+}
+
+// ── MAIN UPDATE ───────────────────────────────────────────
+async function updatePanel(){
+  var gp  = getGlobalParams();
+  var fov = getFragOverrides();
+
+  // Update sys note
+  var sysInfo = SharedEngine.SPLIT_SYSTEMS ? SharedEngine.SPLIT_SYSTEMS[gp.splitSystem] : null;
+  if(sysInfo) setTxt('sys-note', sysInfo.note || '');
+
+  // Update arch desc
+  var arch = SharedEngine.ARCHITECTURES[currentArch];
+  if(arch) setHTML('arch-desc-box','<b style="color:var(--accent2)">'+arch.name+'</b><br>'+arch.desc);
+
+  // Try Python first, fall back to JS
+  var usedPython = false;
+  try {
+    var resp = await fetch('http://localhost:8002/score/all', {
+      method : 'POST',
+      headers: {'Content-Type':'application/json'},
+      signal : AbortSignal.timeout(4000),
+      body   : JSON.stringify(_buildAPIPayload(gp, fov)),
+    });
+    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var data = await resp.json();
+    // Python returns {results:[], bestArch:...}
+    // Each result is already camelCase from split_core.py v2.0
+    lastAllResults = data.results;
+    lastResult     = lastAllResults.find(function(r){ return r.archId===currentArch; }) || lastAllResults[0];
+    usedPython = true;
+    updateODEBadge(true);
+  } catch(e){
+    // JS fallback
+    updateODEBadge(false);
+    lastAllResults = _scoreAllJS(gp, fov);
+    lastResult     = lastAllResults.find(function(r){ return r.archId===currentArch; }) || lastAllResults[0];
+  }
+
+  _renderAll(gp);
+}
+
+// ── BUILD API PAYLOAD ─────────────────────────────────────
+function _buildAPIPayload(gp, fov){
+  return {
+    arch_id           : currentArch,
+    region            : gp.region,
+    bite_mm           : gp.biteMM,
+    velocity          : gp.velocity,
+    treat_day         : gp.treatDay,
+    conc_nm           : gp.concNM,
+    viral_burden      : gp.viralBurden,
+    split_system      : gp.splitSystem,
+    f1_mw             : (fov.f1||{}).mw || 0,
+    f1_rmt            : (fov.f1||{}).rmt !== false,
+    f1_rvg            : false,
+    f2_mw             : (fov.f2||{}).mw || 0,
+    f2_rmt            : false,
+    f2_rvg            : (fov.f2||{}).rvg !== false,
+    immunocompromised : gp.hostState.immunocompromised,
+    high_inflammation : gp.hostState.highInflammation,
+    brainstem_dominant: gp.hostState.brainstemDominant,
+    prior_vaccination : gp.hostState.priorVaccination,
+    viral_load        : gp.hostState.viralLoad,
+    isf_peak_pct      : 0,
+    kpuu_pct          : 0,
+    n_samples         : 500,
+  };
+}
+
+// ── JS FULL SCORE (shared_engine.js) ─────────────────────
+function _scoreAllJS(gp, fov){
+  var results = SharedEngine.compareArchitectures(gp);
+  // JS engine returns lowercase field names (f1bbb, f2bbb, colocalization.colocPct etc.)
+  // Normalise to match Python API camelCase so renderers work identically.
+  results.forEach(function(r){
+    // BBB scores
+    if(r.f1bbb !== undefined && r.f1Bbb === undefined) r.f1Bbb = r.f1bbb;
+    if(r.f2bbb !== undefined && r.f2Bbb === undefined) r.f2Bbb = r.f2bbb;
+    if(r.f3bbb !== undefined && r.f3Bbb === undefined) r.f3Bbb = r.f3bbb;
+    if(r.f1route !== undefined && r.f1Route === undefined) r.f1Route = r.f1route;
+    if(r.f2route !== undefined && r.f2Route === undefined) r.f2Route = r.f2route;
+
+    // Manufacturing & safety (pass mol objects from JS engine result)
+    if(!r.manufacturing)
+      r.manufacturing = SharedEngine.computeManufacturing(r.archId, r.f1mol||{}, r.f2mol||{});
+    if(!r.safety)
+      r.safety = SharedEngine.computeSafety(r.archId, r.f1mol||{}, r.f2mol||{}, gp.hostState);
+
+    // Ensure pBbbBoth for waterfall display
+    if(r.pBbbBoth === undefined){
+      var b1 = (r.f1Bbb||0)/100, b2 = (r.f2Bbb||0)/100;
+      r.pBbbBoth = Math.round(b1 * b2 * 100 * 100) / 100;
+    }
+
+    // Ensure colocalization nested object uses colocPct (both JS and Python use same name — no fix needed)
+
+    // Ensure pColoc at top level
+    if(r.pColoc === undefined && r.colocalization)
+      r.pColoc = r.colocalization.colocPct || 0;
+
+    // Ensure pReassembly at top level
+    if(r.pReassembly === undefined && r.reassembly)
+      r.pReassembly = r.reassembly.probabilityPct || 0;
+
+    // Ensure uncertainty object exists
+    if(!r.uncertainty) r.uncertainty = {confidence:'low', dominantUncertainty:'JS engine — no uncertainty model'};
+  });
+  return results;
+}
+
+// ── RENDER ALL PANELS ─────────────────────────────────────
+function _renderAll(gp){
+  if(!lastResult || !lastAllResults) return;
+  var r    = lastResult;
+  var all  = lastAllResults;
+  var arch = SharedEngine.ARCHITECTURES[r.archId] || {};
+
+  renderArchGrid(all);
+  renderHostTags(gp.hostState);
+  renderKPIs(r);
+  renderUncCard(r);
+  renderFragCards(r);
+  renderStrengthsWeaknesses(r, arch);
+  renderDetailTab(r);
+  renderColocTab(r);
+  renderWindowTab(r, all);
+  renderMfgTab(r);
+  renderScenariosTab(gp);
+  renderRecommendTab(r, all, gp);
+}
+
+// ─── OVERVIEW ────────────────────────────────────────────
+function renderArchGrid(all){
+  var html = '';
+  all.forEach(function(a){
+    var unc  = a.uncertainty || {};
+    var sel  = a.archId===currentArch;
+    var col  = scoreColor(a.finalScore);
+    var lo   = unc.scoreRange ? unc.scoreRange.low  : (unc.pessimistic||0);
+    var hi   = unc.scoreRange ? unc.scoreRange.high : (unc.optimistic||100);
+    var conf = unc.confidence||'medium';
+    html += '<div class="arch-card'+(sel?' selected':'')+'" onclick="selectArch(\''+a.archId+'\')">';
+    html += '<div class="arch-rank" style="color:var(--text3)">#'+a.rank+'</div>';
+    html += '<div class="arch-id">ARCH '+a.archId+'</div>';
+    html += '<div class="arch-name">'+(a.short||a.name||'')+'</div>';
+    html += '<div class="arch-score" style="color:'+col+'">'+a.finalScore+'</div>';
+    html += '<div class="arch-band" style="color:var(--text3)">'+lo+'–'+hi+'</div>';
+    html += '<div class="arch-bar-track"><div class="arch-bar-fill" style="width:'+a.finalScore+'%;background:'+col+'"></div><div class="arch-bar-hi" style="left:'+lo+'%;width:'+(hi-lo)+'%;background:'+col+'"></div></div>';
+    html += '<div class="arch-conf"><span class="conf-badge conf-'+conf+'">'+conf+'</span></div>';
+    html += '</div>';
+  });
+  setHTML('arch-grid', html);
+}
+
+function renderHostTags(hs){
+  if(!hs) return;
+  var tags = [];
+  if(hs.immunocompromised) tags.push('<span class="host-tag ht-bad">Immunocompromised</span>');
+  if(hs.highInflammation)  tags.push('<span class="host-tag ht-warn">High Inflammation</span>');
+  if(hs.brainstemDominant) tags.push('<span class="host-tag ht-bad">Brainstem-dominant</span>');
+  if(hs.priorVaccination)  tags.push('<span class="host-tag ht-good">Prior Vaccination</span>');
+  if(hs.viralLoad==='high') tags.push('<span class="host-tag ht-bad">High Viral Load</span>');
+  if(hs.viralLoad==='low')  tags.push('<span class="host-tag ht-good">Low Viral Load</span>');
+  setHTML('host-modifier-tags', tags.join(''));
+}
+
+function renderKPIs(r){
+  var col = scoreColor(r.finalScore);
+  setTxt('final-score',   r.finalScore);
+  $('final-score').style.color = col;
+  setTxt('overall-score', (r.overallPct||0)+'%');
+  setTxt('mech-score',    (r.mechanismScore||0)+'%');
+  setTxt('window-score',  r.windowScore||(r.window?r.window.windowScore:0));
+  setTxt('window-phase',  r.windowPhase||(r.window?r.window.phaseLabel:'—'));
+}
+
+function renderUncCard(r){
+  var unc = r.uncertainty || {};
+  var lo  = unc.pessimistic || (unc.scoreRange ? unc.scoreRange.low  : 0);
+  var exp = unc.expected    || r.finalScore;
+  var hi  = unc.optimistic  || (unc.scoreRange ? unc.scoreRange.high : 100);
+  var conf= unc.confidence  || 'medium';
+  var dom = unc.dominantUncertainty || '—';
+  var hint= unc.upgradeHint || '';
+  var range = hi-lo; var ep = range>0 ? (exp-lo)/range*100 : 50;
+  var html = '<div class="unc-strip"><span class="unc-pess">'+lo+'</span>';
+  html += '<div class="unc-bar"><div class="unc-bar-fill" style="left:0;width:100%;background:linear-gradient(90deg,#f87171,'+scoreColor(exp)+',var(--green));opacity:.25"></div>';
+  html += '<div class="unc-marker" style="left:calc('+ep+'% - 1px)"></div></div>';
+  html += '<span class="unc-exp">'+exp+'</span><span class="unc-opt">'+hi+'</span></div>';
+  html += '<div style="margin-top:8px;display:flex;gap:8px;align-items:center">';
+  html += '<span class="conf-badge conf-'+conf+'">'+conf+' confidence</span>';
+  html += '<span style="font-size:9px;color:var(--text3)">Dominant uncertainty: '+dom+'</span></div>';
+  if(hint) html += '<div style="font-size:9px;color:var(--text2);margin-top:6px;line-height:1.5">💡 '+hint+'</div>';
+  setHTML('unc-display', html);
+}
+
+function renderFragCards(r){
+  var f1bbb = r.f1Bbb; var f2bbb = r.f2Bbb;
+  var mw1   = parseFloat($('f1-mw').value);
+  var mw2   = parseFloat($('f2-mw').value);
+  var arch  = SharedEngine.ARCHITECTURES[r.archId]||{};
+  setTxt('f1-name', 'Fragment 1 (F1)');
+  setHTML('f1-props', 'MW: '+(mw1||arch.f1_mw||'?')+' Da\nTarget: '+arch.name);
+  setTxt('f1-bbb-score', f1bbb+'%');
+  $('f1-bbb-score').style.color = scoreColor(f1bbb);
+  setTxt('f1-route', '→ '+(r.f1Route||'—'));
+
+  setTxt('f2-name', 'Fragment 2 (F2)');
+  setHTML('f2-props', 'MW: '+(mw2||arch.f2_mw||'?')+' Da\nSplit partner');
+  setTxt('f2-bbb-score', f2bbb+'%');
+  $('f2-bbb-score').style.color = scoreColor(f2bbb);
+  setTxt('f2-route', '→ '+(r.f2Route||'—'));
+
+  var tri = $('tripartite-note');
+  if(r.tripartite||arch.tripartite){
+    tri.style.display='block';
+    tri.textContent = 'TRIPARTITE ARCHITECTURE: F3 ('+arch.f3_mw+' Da, RVG-29) adds a third fragment. '
+      +'3-fragment co-localization penalty applied: ×'+Math.round(Math.pow((r.f3Bbb||arch.f3_mw||50)/100*0.22, 0.5)*100)+'%.';
+  } else {
+    tri.style.display='none';
+  }
+
+  setHTML('strengths-list',  (r.strengths||[]).map(function(s){ return '✓ '+s; }).join('<br>'));
+  setHTML('weaknesses-list', (r.weaknesses||[]).map(function(w){ return '✗ '+w; }).join('<br>'));
+}
+
+function renderStrengthsWeaknesses(r, arch){
+  var s = (r.strengths||arch.strengths||[]);
+  var w = (r.weaknesses||arch.weaknesses||[]);
+  setHTML('strengths-list',  s.map(function(x){ return '✓ '+x; }).join('<br>')||'—');
+  setHTML('weaknesses-list', w.map(function(x){ return '✗ '+x; }).join('<br>')||'—');
+}
+
+// ─── MECHANISM TAB ────────────────────────────────────────
+function renderDetailTab(r){
+  setTxt('detail-title', 'Architecture '+r.archId+' — Probability Chain');
+  setTxt('mech-title',   'Architecture '+r.archId+' — Mechanistic Efficacy Model');
+
+  // Probability chain waterfall
+  var pc   = r.probChain || {};
+  var pc2  = {
+    'F1 BBB crossing'      : r.f1Bbb,
+    'F2 BBB crossing'      : r.f2Bbb,
+    'Co-localization'      : r.pColoc || (r.colocalization ? r.colocalization.colocPct : 0),
+    'Reassembly'           : r.pReassembly || (r.reassembly ? r.reassembly.probabilityPct : 0),
+    'Mechanism efficacy'   : r.mechanismScore,
+    'Therapeutic window'   : r.windowScore || (r.window ? r.window.windowScore : 0),
+  };
+  var run = 100; var html = '';
+  var i = 0;
+  Object.keys(pc2).forEach(function(label){
+    var v = pc2[label]||0;
+    run = run * v/100;
+    var col = scoreColor(v);
+    var runCol = scoreColor(run);
+    html += '<div class="wfall-step">';
+    html += '<div class="wfall-num" style="background:'+col+'">'+( ++i)+'</div>';
+    html += '<div class="wfall-label">'+label+'</div>';
+    html += '<div class="wfall-bar-wrap"><div class="wfall-bar" style="width:'+v+'%;background:'+col+'"></div></div>';
+    html += '<div class="wfall-pct" style="color:'+col+'">'+v+'%</div>';
+    html += '<div class="wfall-running" style="color:'+runCol+'">→'+run.toFixed(1)+'%</div>';
+    html += '</div>';
+  });
+  setHTML('chain-panel', html||'<div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">No data</div>');
+
+  // Mechanism detail
+  var md = r.mechanismDetail || {};
+  if(Object.keys(md).length){
+    var mhml = '';
+    Object.keys(md).forEach(function(k){
+      if(k==='mechanism'||k==='limiting_step'||k==='note') return;
+      mhml += '<div class="mech-row"><span class="mech-key">'+k.replace(/_/g,' ')+'</span><span class="mech-val">'+md[k]+'</span></div>';
+    });
+    if(md.mechanism)     setTxt('mech-subtitle', md.mechanism);
+    if(md.limiting_step) mhml += '<div class="mech-row" style="color:var(--amber)"><span class="mech-key">Limiting step</span><span class="mech-val">'+md.limiting_step+'</span></div>';
+    if(md.note)          mhml += '<div style="font-size:9px;color:var(--amber);padding:6px 0">'+md.note+'</div>';
+    setHTML('mech-panel', mhml);
+  } else {
+    setHTML('mech-panel','<div style="color:var(--text3);font-size:10px;padding:12px">Mechanism details available after scoring.</div>');
+  }
+
+  // Split system grid
+  var sysSel = $('split-sys').value;
+  var shtml = '';
+  var sysMap = SharedEngine.SPLIT_SYSTEMS || {};
+  Object.keys(sysMap).forEach(function(sk){
+    var s = sysMap[sk];
+    var isSel = sk===sysSel;
+    var isBad = s.kd_nM > 1000;
+    var kd    = s.kd_nM >= 1000 ? (s.kd_nM/1000).toFixed(0)+'μM' : s.kd_nM+'nM';
+    shtml += '<div class="sys-card'+(isSel?' selected':'')+(isBad?' bad':'')+(isSel?' onclick="void(0)"':'')+'">';
+    shtml += '<div class="sys-name">'+s.name+'</div>';
+    shtml += '<div class="sys-kd" style="color:'+(isBad?'#f87171':'var(--green)')+'">'+kd+'</div>';
+    shtml += '<div class="sys-note">'+s.note+'</div></div>';
+  });
+  setHTML('sys-grid', shtml);
+
+  // RABV targets
+  var TARGETS = SharedEngine.RABV_TARGETS || {};
+  var tarch = SharedEngine.ARCHITECTURES[r.archId]||{};
+  var tkey = tarch.target;
+  var tdata = TARGETS[tkey];
+  if(tdata){
+    var thtml = '<div class="mech-row"><span class="mech-key">Target</span><span class="mech-val">'+tdata.name+'</span></div>';
+    thtml += '<div class="mech-row"><span class="mech-key">Interface residues</span><span class="mech-val">'+tdata.residues+'</span></div>';
+    thtml += '<div class="mech-row"><span class="mech-key">Druggability</span><span class="mech-val">'+tdata.druggability+'</span></div>';
+    thtml += '<div class="mech-row"><span class="mech-key">Effect</span><span class="mech-val">'+tdata.effect+'</span></div>';
+    if(tdata.kd_nM) thtml += '<div class="mech-row"><span class="mech-key">Reported Kd</span><span class="mech-val">'+tdata.kd_nM+' nM</span></div>';
+    setHTML('target-detail', thtml);
+  } else {
+    setHTML('target-detail', '<div style="color:var(--text3);font-size:10px;padding:8px">Target data for '+tkey+' not found.</div>');
+  }
+}
+
+// ─── CO-LOCALIZATION TAB ──────────────────────────────────
+function renderColocTab(r){
+  var cl = r.colocalization || {};
+  var bd = cl.breakdown || {};
+  var baseColoc  = bd.baseColoc   || 0;
+  var baseCodeliv= bd.baseCodeliv || 0;
+  var pen        = cl.colocPct    || 0;
+  var bot        = (cl.bottleneck||[])[0];
+
+  setTxt('raw-codeliv',       baseCodeliv+'%');
+  setTxt('pen-coloc',         pen+'%');
+  $('pen-coloc').style.color = scoreColor(pen);
+  setTxt('coloc-bottleneck',  bot ? bot.label : '—');
+
+  // Breakdown rows
+  var rows = [
+    {label:'Min fragment BBB (F1 or F2, whichever lower)', value: Math.min(r.f1Bbb||0, r.f2Bbb||0)},
+    {label:'Region × viral overlap',                        value: bd.regionOverlap     || 0},
+    {label:'Cell-entry route overlap',                      value: bd.cellEntryOverlap  || 0},
+    {label:'→ Base co-localization',                        value: baseColoc},
+    {label:'Half-life synchrony penalty',                   value: bd.halfLifeMismatch  || 0},
+    {label:'Arrival asynchrony penalty',                    value: bd.asyncPenalty      || 0},
+    {label:'Degradation mismatch penalty',                  value: bd.degradMismatch    || 0},
+    {label:'→ FINAL co-localization',                       value: pen},
+  ];
+  var rhtml = rows.map(function(row){
+    var col = row.label.startsWith('→') ? scoreColor(row.value) : 'var(--text2)';
+    var bold= row.label.startsWith('→') ? 'font-weight:700;' : '';
+    return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:9px;'+bold+'">'
+      +'<span style="color:var(--text2)">'+row.label+'</span>'
+      +'<span style="font-family:var(--mono);color:'+col+'">'+row.value+'%</span></div>';
+  }).join('');
+  setHTML('coloc-breakdown-rows', rhtml);
+
+  // Waterfall
+  var wsteps = (cl.bottleneck||rows.slice(0,3)).map(function(s,i){
+    var col = scoreColor(s.value||s.v||0);
+    return '<div class="wfall-step"><div class="wfall-num" style="background:'+col+'">'+(i+1)+'</div>'
+      +'<div class="wfall-label">'+(s.label||s.name||'')+'</div>'
+      +'<div class="wfall-bar-wrap"><div class="wfall-bar" style="width:'+(s.value||s.v||0)+'%;background:'+col+'"></div></div>'
+      +'<div class="wfall-pct" style="color:'+col+'">'+(s.value||s.v||0)+'%</div></div>';
+  }).join('');
+  setHTML('coloc-waterfall', wsteps);
+
+  // Advice
+  var adv = [];
+  if(baseCodeliv < 20) adv.push('Both fragment BBB scores are low — improve delivery first. Target TfR-RMT for both fragments.');
+  if(bd.cellEntryOverlap < 50) adv.push('Cell-entry routes differ — both via TfR-RMT maximises overlap.');
+  if(bd.halfLifeMismatch && bd.halfLifeMismatch < 60) adv.push('Fragment half-life mismatch — PEGylate the shorter-lived fragment.');
+  if(bd.asyncPenalty && bd.asyncPenalty < 70) adv.push('Delivery timing desynchronised — use the same conjugate strategy for both.');
+  if(!adv.length) adv.push('Co-localization profile looks reasonable. Further improvements require in vivo validation.');
+  setHTML('coloc-advice', adv.map(function(a){ return '<div>› '+a+'</div>'; }).join(''));
+}
+
+// ─── WINDOW TAB ───────────────────────────────────────────
+function renderWindowTab(r, all){
+  var win = r.window || {};
+  var cns = win.cnsDay||0; var sym = win.symptomDay||0; var fat = win.fatalDay||0;
+  var treat = win.treatDay||0; var maxD = fat+2;
+
+  // Timeline grid
+  var tg = [
+    {label:'CNS day',       value:cns.toFixed(1)+' d', color:'var(--green)'},
+    {label:'Symptom day',   value:sym.toFixed(1)+' d', color:'var(--amber)'},
+    {label:'Fatal day',     value:fat.toFixed(1)+' d', color:'#f87171'},
+    {label:'Treatment day', value:'Day '+treat,         color:'var(--text)'},
+  ];
+  setHTML('window-timeline-grid', tg.map(function(t){
+    return '<div class="mc-box"><div class="mc-label">'+t.label+'</div>'
+      +'<div class="mc-val" style="color:'+t.color+';font-size:18px">'+t.value+'</div></div>';
+  }).join(''));
+
+  // Bar
+  function pct(d){ return Math.min(100, d/maxD*100); }
+  $('wbar-pns').style.left  = '0'; $('wbar-pns').style.width  = pct(cns)+'%';
+  $('wbar-ecns').style.left = pct(cns)+'%'; $('wbar-ecns').style.width = (pct(sym)-pct(cns))+'%';
+  $('wbar-sym').style.left  = pct(sym)+'%'; $('wbar-sym').style.width  = (pct(fat)-pct(sym))+'%';
+  $('wbar-treat').style.left= 'calc('+pct(treat)+'% - 1px)';
+
+  // Verdict
+  var whtml = '<b style="color:'+win.color+'">'+win.phaseLabel+'</b> — Window score: '
+    +win.windowScore+'/100 ('+win.verdict+')<br>';
+  whtml += 'Infected burden at treatment: '+(win.burdenPct||0)+'% of neurons<br>';
+  if(win.canPrevent)      whtml += '✓ Can prevent CNS seeding with immediate treatment';
+  else if(win.canControl) whtml += '⚡ Early CNS phase — containment still achievable';
+  else if(win.canSalvage) whtml += '⚠ Late-stage salvage — partial viral burden reduction';
+  else                    whtml += '✗ Beyond salvage window';
+  setHTML('window-verdict', whtml);
+
+  // Delivery timeline
+  var dhtml = '→ F1 arrival in CNS: '+(win.f1ArrivalH||4)+' h after administration<br>';
+  dhtml += '→ F2 arrival in CNS: '+(win.f2ArrivalH||8)+' h after administration<br>';
+  dhtml += '→ Last fragment arrives: '+(win.lateArrivalH||8)+' h<br>';
+  dhtml += '→ Reassembly complete: +'+(win.reassemblyH ? win.reassemblyH.toFixed(2) : '~0')+' h<br>';
+  dhtml += '→ Mechanism onset: +'+(win.inhibOnsetH||2)+' h<br>';
+  dhtml += '→ Total time to effect: '+(win.totalH ? win.totalH.toFixed(1) : '—')+' h';
+  setHTML('delivery-timeline', dhtml);
+
+  // Arch window compare
+  var awhtml = '<table style="width:100%;border-collapse:collapse;font-size:9px">';
+  awhtml += '<tr><th style="text-align:left;color:var(--text3);padding:4px;font-family:var(--mono);font-size:8px">Arch</th>'
+    +'<th style="color:var(--text3);padding:4px;font-family:var(--mono);font-size:8px">Best window</th>'
+    +'<th style="color:var(--text3);padding:4px;font-family:var(--mono);font-size:8px">Window score</th>'
+    +'<th style="color:var(--text3);padding:4px;font-family:var(--mono);font-size:8px">Phase</th></tr>';
+  all.forEach(function(a){
+    var aw  = a.window || {};
+    var col = scoreColor(aw.windowScore||0);
+    awhtml += '<tr><td style="padding:4px;font-family:var(--mono);color:var(--accent2)">'+a.archId+'</td>'
+      +'<td style="padding:4px;color:var(--text2)">'+(SharedEngine.ARCHITECTURES[a.archId]||{}).best_window+'</td>'
+      +'<td style="padding:4px;font-family:var(--mono);color:'+col+'">'+(aw.windowScore||0)+'</td>'
+      +'<td style="padding:4px;color:var(--text2)">'+(aw.phaseLabel||'—')+'</td></tr>';
+  });
+  awhtml += '</table>';
+  setHTML('arch-window-compare', awhtml);
+}
+
+// ─── MFG + SAFETY TAB ────────────────────────────────────
+function renderMfgTab(r){
+  var mfg = r.manufacturing || {};
+  var saf = r.safety        || {};
+
+  // Mfg
+  var mc = mfg.feasibility||0;
+  var mcc = scoreColor(mc);
+  setTxt('mfg-grade', mfg.grade||'—');
+  $('mfg-grade').style.color = mcc;
+  setTxt('mfg-score', mc);
+  $('mfg-score').style.color = mcc;
+  setTxt('mfg-note',  mfg.costNote||mfg.cost_note||'');
+  setTxt('mfg-limiting', 'Limiting factor: '+(mfg.limitingFactor||mfg.limiting_factor||'—')+' — '+(mfg.costNote||mfg.cost_note||''));
+
+  var subs = mfg.subScores || mfg.sub_scores || [];
+  setHTML('mfg-subScores', subs.map(function(s){
+    var v = s.v !== undefined ? s.v : (s.value||0);
+    var col = scoreColor(v);
+    return '<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid var(--border);font-size:9px">'
+      +'<span style="color:var(--text2)">'+s.name+'</span>'
+      +'<div style="display:flex;align-items:center;gap:6px">'
+      +'<div style="width:40px;height:3px;background:var(--surface);border-radius:2px;overflow:hidden"><div style="width:'+v+'%;height:100%;background:'+col+'"></div></div>'
+      +'<span style="font-family:var(--mono);color:'+col+';font-size:9px">'+v+'</span></div></div>';
+  }).join(''));
+
+  // Safety
+  var sc  = saf.safetyScore||saf.safety_score||0;
+  var scc = scoreColor(sc);
+  setTxt('safety-score', sc);
+  $('safety-score').style.color = scc;
+  var lvl = saf.riskLevel||saf.risk_level||'medium';
+  var sl  = $('safety-level');
+  if(sl){ sl.textContent=lvl+' risk'; sl.className='conf-badge conf-'+(lvl==='low'?'high':lvl==='medium'?'medium':'low'); }
+  setTxt('safety-note', saf.safetyNote||saf.safety_note||'');
+
+  var flags = saf.riskFlags||saf.risk_flags||[];
+  setHTML('safety-flags', flags.map(function(f){
+    return '<div class="risk-flag"><span class="risk-sev sev-'+f.severity+'">'+f.severity+'</span>'
+      +'<div><div style="font-size:9px;font-weight:600;color:var(--text);margin-bottom:2px">'+f.risk+'</div>'
+      +'<div style="font-size:9px;color:var(--text3)">'+f.note+'</div></div></div>';
+  }).join(''));
+
+  // Translational rank
+  var all = lastAllResults||[];
+  var trows = all.map(function(a){
+    var am  = a.manufacturing||{};
+    var as_ = a.safety||{};
+    var ms  = am.feasibility||0;
+    var ss  = as_.safetyScore||as_.safety_score||0;
+    var fs  = a.finalScore||0;
+    var tot = Math.round(fs*0.60 + ms*0.25 + ss*0.15);
+    return {archId:a.archId, fs:fs, ms:ms, ss:ss, tot:tot};
+  }).sort(function(a,b){ return b.tot-a.tot; });
+
+  var trhtml = '<table style="width:100%;border-collapse:collapse;font-size:9px">';
+  trhtml += '<tr><th style="text-align:left;padding:5px;font-family:var(--mono);font-size:7px;color:var(--text3)">Arch</th>'
+    +'<th style="padding:5px;font-family:var(--mono);font-size:7px;color:var(--text3)">Scientific</th>'
+    +'<th style="padding:5px;font-family:var(--mono);font-size:7px;color:var(--text3)">Mfg</th>'
+    +'<th style="padding:5px;font-family:var(--mono);font-size:7px;color:var(--text3)">Safety</th>'
+    +'<th style="padding:5px;font-family:var(--mono);font-size:7px;color:var(--text3)">Total</th></tr>';
+  trows.forEach(function(t){
+    trhtml += '<tr><td style="padding:5px;font-family:var(--mono);color:var(--accent2)">'+t.archId+'</td>'
+      +'<td style="padding:5px;text-align:center;color:'+scoreColor(t.fs)+'">'+t.fs+'</td>'
+      +'<td style="padding:5px;text-align:center;color:'+scoreColor(t.ms)+'">'+t.ms+'</td>'
+      +'<td style="padding:5px;text-align:center;color:'+scoreColor(t.ss)+'">'+t.ss+'</td>'
+      +'<td style="padding:5px;text-align:center;font-weight:700;color:'+scoreColor(t.tot)+'">'+t.tot+'</td></tr>';
+  });
+  trhtml += '</table>';
+  setHTML('translational-rank', trhtml);
+}
+
+// ─── SCENARIOS TAB ────────────────────────────────────────
+async function renderScenariosTab(gp){
+  var scenarios = SharedEngine.CLINICAL_SCENARIOS || [];
+  var results   = scenarios.map(function(sc){
+    var scGp = Object.assign({}, gp, {
+      biteMM      : sc.biteMM      || sc.bite_mm   || gp.biteMM,
+      treatDay    : sc.treatDay    || sc.treat_day  || gp.treatDay,
+      velocity    : sc.velocity    || gp.velocity,
+      viralBurden : sc.viralBurden || gp.viralBurden,
+      hostState   : Object.assign({}, gp.hostState, {
+        immunocompromised: sc.immunocompromised !== undefined ? sc.immunocompromised : gp.hostState.immunocompromised,
+        priorVaccination : sc.prior_vaccination !== undefined ? sc.prior_vaccination : gp.hostState.priorVaccination,
+        highInflammation : sc.high_inflammation !== undefined ? sc.high_inflammation : gp.hostState.highInflammation,
+        brainstemDominant: sc.brainstem_dominant!== undefined ? sc.brainstem_dominant: gp.hostState.brainstemDominant,
+        viralLoad        : sc.viral_load || gp.hostState.viralLoad,
+      }),
+    });
+    var archs = SharedEngine.compareArchitectures(scGp);
+    return {label: sc.label||'Scenario', archs: archs, best: archs[0]};
+  });
+
+  var th = ['A','B','C','D'];
+  var html = '<table class="sc-table"><thead><tr>'
+    +'<th>Scenario</th>'
+    +'<th>Winner</th>'
+    +th.map(function(a){ return '<th style="text-align:center">'+a+'</th>'; }).join('')
+    +'</tr></thead><tbody>';
+  results.forEach(function(sc){
+    var scoreMap = {};
+    sc.archs.forEach(function(a){ scoreMap[a.archId]=a.finalScore; });
+    html += '<tr><td style="color:var(--text)">'+sc.label+'</td>'
+      +'<td style="font-family:var(--mono);color:var(--accent2)">'+sc.best.archId+' ('+sc.best.finalScore+')</td>'
+      +th.map(function(a){
+        var v   = scoreMap[a]||0;
+        var col = scoreColor(v);
+        var bold= a===sc.best.archId ? 'font-weight:700;' : '';
+        return '<td style="text-align:center;font-family:var(--mono);color:'+col+';'+bold+'">'+v+'</td>';
+      }).join('')
+      +'</tr>';
+  });
+  html += '</tbody></table>';
+  setHTML('scenario-table-wrap', html);
+
+  // Tornado chart
+  renderTornadoChart(gp);
+}
+
+function renderTornadoChart(gp){
+  var base = (lastAllResults||[]).find(function(r){ return r.archId===currentArch; });
+  if(!base) return;
+  var bs = base.finalScore;
+
+  var params = [
+    {label:'Bite distance +200mm',  gp2: Object.assign({},gp,{biteMM:gp.biteMM+200})},
+    {label:'Bite distance −200mm',  gp2: Object.assign({},gp,{biteMM:gp.biteMM-200})},
+    {label:'Treatment day +3',      gp2: Object.assign({},gp,{treatDay:gp.treatDay+3})},
+    {label:'Treatment day −3',      gp2: Object.assign({},gp,{treatDay:Math.max(0,gp.treatDay-3)})},
+    {label:'Conc ×2',               gp2: Object.assign({},gp,{concNM:gp.concNM*2})},
+    {label:'Conc ÷2',               gp2: Object.assign({},gp,{concNM:gp.concNM/2})},
+    {label:'Viral burden +30%',     gp2: Object.assign({},gp,{viralBurden:Math.min(0.95,gp.viralBurden+0.30)})},
+    {label:'Viral burden −30%',     gp2: Object.assign({},gp,{viralBurden:Math.max(0.05,gp.viralBurden-0.30)})},
+  ];
+
+  var deltas = params.map(function(p){
+    try {
+      var r2 = SharedEngine.scoreArchitectureLive(currentArch, p.gp2, {});
+      return {label:p.label, delta:r2.finalScore - bs};
+    } catch(e){ return {label:p.label, delta:0}; }
+  });
+  deltas.sort(function(a,b){ return Math.abs(b.delta)-Math.abs(a.delta); });
+
+  var maxAbs = Math.max(1, Math.max.apply(null, deltas.map(function(d){ return Math.abs(d.delta); })));
+  var html = '';
+  deltas.slice(0,6).forEach(function(d){
+    var col = d.delta>=0 ? 'var(--green)' : '#f87171';
+    var w   = Math.abs(d.delta)/maxAbs*100;
+    html += '<div class="tornado-row">';
+    html += '<div class="tornado-label">'+d.label+'</div>';
+    if(d.delta < 0){
+      html += '<div class="tornado-bar-neg" style="width:'+w+'px;background:#f87171"></div>';
+      html += '<div class="tornado-axis"></div>';
+      html += '<div class="tornado-bar-pos" style="width:0"></div>';
+    } else {
+      html += '<div class="tornado-bar-neg" style="width:0"></div>';
+      html += '<div class="tornado-axis"></div>';
+      html += '<div class="tornado-bar-pos" style="width:'+w+'px;background:var(--green)"></div>';
+    }
+    html += '<div class="tornado-delta" style="color:'+col+'">'+(d.delta>=0?'+':'')+d.delta+'</div>';
+    html += '</div>';
+  });
+  setHTML('tornado-chart', html);
+}
+
+// ─── RECOMMENDATION TAB ───────────────────────────────────
+function renderRecommendTab(r, all, gp){
+  var best  = all[0];
+  var arch  = SharedEngine.ARCHITECTURES[best.archId]||{};
+  var unc   = best.uncertainty||{};
+  var win   = best.window||{};
+
+  var rationale = [];
+  if(win.canPrevent)      rationale.push('Treatment day allows pre-CNS interception — highest possible outcome class.');
+  else if(win.canControl) rationale.push('Early CNS phase — containment still possible before widespread seeding.');
+  else                    rationale.push('Late-stage scenario — salvage probability only.');
+  rationale.push('Mechanism: '+(arch.desc||'—')+'.');
+  if(gp.hostState.immunocompromised && best.archId==='A')
+    rationale.push('⚠ Anti-P is weakened in immunocompromised patients — consider Architecture B.');
+  if(gp.hostState.brainstemDominant && best.archId==='C')
+    rationale.push('⚠ Anti-L mechanism too slow for brainstem-dominant presentation — consider Architecture A.');
+
+  var html = '<div class="rec-box">';
+  html += '<div class="rec-arch" style="color:'+scoreColor(best.finalScore)+'">Architecture '+best.archId+'</div>';
+  html += '<div class="rec-name">'+(arch.name||'')+'</div>';
+  html += '<div style="display:flex;gap:8px;align-items:center;margin-bottom:12px">';
+  html += '<span style="font-family:var(--mono);font-size:22px;font-weight:700;color:'+scoreColor(best.finalScore)+'">'+best.finalScore+'</span>';
+  html += '<span class="conf-badge conf-'+(unc.confidence||'medium')+'">'+(unc.confidence||'medium')+' confidence</span>';
+  html += '</div>';
+  html += '<div class="rec-section"><div class="rec-section-title">Rationale</div>';
+  html += rationale.map(function(p){ return '<div class="rec-point">'+p+'</div>'; }).join('');
+  html += '</div>';
+  html += '<div class="rec-section"><div class="rec-section-title">Next Steps</div>';
+  html += '<div class="rec-point">'+(unc.upgradeHint||best.upgradeHint||'Continue current design.')+'</div>';
+  if(best.criticalBottleneck) html += '<div class="rec-point">Critical bottleneck: <b>'+best.criticalBottleneck+'</b> — prioritise experimental validation here.</div>';
+  html += '</div>';
+  html += '<div class="rec-section"><div class="rec-section-title">Alternatives</div>';
+  all.slice(1,3).forEach(function(a){
+    html += '<div class="rec-point">Arch '+a.archId+' (score '+a.finalScore+') — '+(SharedEngine.ARCHITECTURES[a.archId]||{}).short+'</div>';
+  });
+  html += '</div></div>';
+  setHTML('recommendation-box', html);
+
+  // Explainability
+  var expl = _explainJS(r, all, gp);
+  var ebox = $('explain-box');
+  if(ebox) ebox.style.display='block';
+
+  var dhtml = expl.drivers.map(function(d){
+    return '<div class="explain-driver"><span class="expl-icon">✓</span><div style="flex:1"><div class="expl-label">'+d.label+'</div><div class="expl-note">'+d.note+'</div></div><span class="expl-val" style="color:'+scoreColor(d.value)+'">'+d.value+'%</span></div>';
+  }).join('');
+  setHTML('explain-drivers', dhtml||'<div style="color:var(--text3);font-size:10px;padding:8px">No significant drivers at current parameters.</div>');
+
+  var lhtml = expl.limiters.map(function(l){
+    return '<div class="explain-driver"><span class="expl-icon">✗</span><div style="flex:1"><div class="expl-label">'+l.label+'</div><div class="expl-note">'+l.note+'</div></div><span class="expl-val" style="color:#f87171">'+l.value+'%</span></div>';
+  }).join('');
+  setHTML('explain-limiters', lhtml||'<div style="color:var(--text3);font-size:10px;padding:8px">No severe limiters at current parameters.</div>');
+
+  setHTML('explain-upgrades', expl.upgrades.map(function(u){ return '<div>› '+u+'</div>'; }).join(''));
+}
+
+function _explainJS(r, all, gp){
+  var drivers=[],limiters=[],upgrades=[];
+  var win = r.window||{};
+  var cl  = r.colocalization||{};
+  var rr  = r.reassembly||{};
+  var unc = r.uncertainty||{};
+
+  if(r.f1Bbb>=20) drivers.push({label:'F1 BBB crossing',  value:r.f1Bbb,       note:'Fragment 1 enters CNS via '+r.f1Route});
+  if(r.f2Bbb>=20) drivers.push({label:'F2 BBB crossing',  value:r.f2Bbb,       note:'Fragment 2 enters CNS via '+r.f2Route});
+  if(r.mechanismScore>=60) drivers.push({label:'Mechanism strength', value:r.mechanismScore, note:'Target is druggable and effect is mechanistically grounded'});
+  if(win.canPrevent)  drivers.push({label:'Pre-CNS timing',  value:win.windowScore||0, note:'Treatment before CNS seeding'});
+  else if(win.canControl) drivers.push({label:'Early CNS timing', value:win.windowScore||0, note:'Early CNS phase — containment still achievable'});
+  if(rr.probabilityPct>=50) drivers.push({label:'Reassembly efficiency', value:rr.probabilityPct||0, note:rr.system+' — assembly probability adequate'});
+
+  if(r.f1Bbb<15)  limiters.push({label:'F1 BBB entry',        value:r.f1Bbb,       note:'Fragment 1 barely crossing — rate-limiting'});
+  if(r.f2Bbb<15)  limiters.push({label:'F2 BBB entry',        value:r.f2Bbb,       note:'Fragment 2 barely crossing — rate-limiting'});
+  var cp = cl.colocPct||0;
+  if(cp<15)       limiters.push({label:'Co-localization',       value:cp,            note:'Fragments unlikely to meet in same infected neuron'});
+  if(rr.probabilityPct<30) limiters.push({label:'Reassembly probability', value:rr.probabilityPct||0, note:'Split system Kd poorly matched to intracellular concentration'});
+  if((win.windowScore||0)<30) limiters.push({label:'Therapeutic window', value:win.windowScore||0,   note:'Treatment too late — '+win.phaseLabel});
+  if(r.mechanismScore<35) limiters.push({label:'Mechanism efficacy', value:r.mechanismScore, note:'Target druggability or occupancy threshold not achieved'});
+
+  limiters.sort(function(a,b){ return a.value-b.value; });
+  if(limiters.length){
+    var t = limiters[0].label;
+    if(t.includes('BBB'))       upgrades.push('Switch to TfR-RMT (Kd ~30 nM). Reduce MW below 8 kDa.');
+    else if(t.includes('Co-loc')) upgrades.push('Route F1 and F2 via the SAME BBB pathway. PEGylate shorter-lived fragment.');
+    else if(t.includes('Rea'))  upgrades.push('Switch to Npu DnaE split-intein (Kd 0.001 nM, t½~1 s) — irreversible at picomolar concentrations.');
+    else if(t.includes('win'))  upgrades.push('Treat earlier. Each day post-CNS reduces window score ~8 pts. Anti-P (Arch A) has fastest onset.');
+    else if(t.includes('Mec'))  upgrades.push('Target occupancy insufficient. Increase dose or switch to Architecture A (low occupancy required).');
+  }
+  if(unc.dominantUncertainty)
+    upgrades.push('Primary uncertainty: '+unc.dominantUncertainty+' — validate experimentally before advancing.');
+
+  return {drivers:drivers, limiters:limiters, upgrades:upgrades};
+}
+
+// ─── MONTE CARLO ─────────────────────────────────────────
+async function runMCAnalysis(){
+  var btn    = $('mc-btn');
+  var status = $('mc-status');
+  if(btn)    btn.disabled = true;
+  if(status) status.textContent = '⏳ Running 500 simulations…';
+
+  // yield paint
+  await new Promise(function(res){ setTimeout(res, 30); });
+
+  try {
+    var gp  = getGlobalParams();
+    var t0  = Date.now();
+
+    var mc;
+    try {
+      // Try Python MC endpoint
+      var fov  = getFragOverrides();
+      var body = Object.assign(_buildAPIPayload(gp, fov), {n_samples:500});
+      var resp = await fetch('http://localhost:8002/montecarlo', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        signal:AbortSignal.timeout(20000),
+        body:JSON.stringify(body),
+      });
+      if(!resp.ok) throw new Error('HTTP '+resp.status);
+      mc = await resp.json();
+      // Python returns camelCase from split_core v2.0
+    } catch(e2){
+      // JS fallback
+      mc = SharedEngine.runMonteCarlo(gp, 500);
+    }
+
+    var ms = Date.now()-t0;
+    lastMC = mc;
+    if(status) status.textContent='✓ Done in '+ms+'ms — best: Arch '+(mc.bestArch)+' ('+mc.certainty+')';
+    renderMCTab(mc);
+    showTab('tab-montecarlo');
+  } catch(e){
+    console.error('MC error:', e);
+    if(status) status.textContent='⚠ Monte Carlo error — check console';
+  } finally {
+    if(btn) btn.disabled=false;
+  }
+}
+
+function renderMCTab(mc){
+  if(!mc || !mc.results) return;
+  var rs = mc.results;
+
+  // Rank bars
+  var bColors = {A:'var(--accent)',B:'var(--green)',C:'var(--amber)',D:'#4f9cf9'};
+  var html = '';
+  rs.forEach(function(r){
+    var col = bColors[r.archId]||'var(--text)';
+    var w   = Math.max(2, r.rankPct1);
+    html += '<div class="mc-rank-row">';
+    html += '<div class="mc-arch-id" style="color:'+col+'">'+r.archId+'</div>';
+    html += '<div class="mc-rank-bar-wrap"><div class="mc-rank-bar" style="width:'+w+'%;background:'+col+'">';
+    if(w>15) html += '<span class="mc-rank-pct">'+r.rankPct1+'%</span>';
+    html += '</div></div>';
+    if(w<=15) html += '<span style="font-family:var(--mono);font-size:9px;color:'+col+'">'+r.rankPct1+'%</span>';
+    html += '<div class="mc-rank-nums">p10:'+r.p10+' · E:'+r.expected+' · p90:'+r.p90+'</div>';
+    html += '</div>';
+  });
+  setHTML('mc-rank-display', html);
+
+  // Box plot
+  var bhtml = '';
+  rs.forEach(function(r){
+    var col  = scoreColor(r.expected);
+    var lo   = r.p10||0; var hi = r.p90||100; var exp = r.expected||0;
+    var range= hi-lo; var ep = range>0?(exp-lo)/range*100:50;
+    bhtml += '<div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">';
+    bhtml += '<span style="font-family:var(--mono);font-size:9px;min-width:12px;color:'+col+'">'+r.archId+'</span>';
+    bhtml += '<div style="flex:1;height:8px;background:var(--surface);border-radius:4px;position:relative;overflow:visible">';
+    bhtml += '<div style="position:absolute;left:'+lo+'%;width:'+(hi-lo)+'%;height:100%;background:'+col+';opacity:.3;border-radius:4px"></div>';
+    bhtml += '<div style="position:absolute;left:calc('+ep+'% - 2px);top:-1px;width:4px;height:10px;background:'+col+';border-radius:2px"></div>';
+    bhtml += '</div>';
+    bhtml += '<span style="font-family:var(--mono);font-size:8px;color:var(--text3);min-width:80px">'+lo+'–'+exp+'–'+hi+'</span>';
+    bhtml += '</div>';
+  });
+  setHTML('mc-box-plot', bhtml);
+
+  // Uncertainty breakdown (from first arch in results since MC is global)
+  var unc = (lastResult && lastResult.uncertainty) || {};
+  var breakdown = unc.breakdown || [
+    {param:'BBB delivery',        cvPct:30, contributionPct:24},
+    {param:'Co-localization',     cvPct:35, contributionPct:32},
+    {param:'Reassembly',          cvPct:20, contributionPct:11},
+    {param:'Therapeutic window',  cvPct:25, contributionPct:16},
+    {param:'Mechanism efficacy',  cvPct:20, contributionPct:11},
+  ];
+  var ubhtml = breakdown.map(function(b){
+    var col = b.contributionPct>25 ? '#f87171' : (b.contributionPct>15 ? 'var(--amber)' : 'var(--green)');
+    return '<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--border);font-size:9px">'
+      +'<span style="color:var(--text2)">'+(b.param||'')+'</span>'
+      +'<span style="font-family:var(--mono)"><span style="color:var(--text3)">CV:'+(b.cvPct||0)+'%</span>'
+      +'  <span style="color:'+col+'">drives:'+(b.contributionPct||0)+'%</span></span></div>';
+  }).join('');
+  setHTML('mc-unc-breakdown', ubhtml);
+}
+
+// ── INIT ──────────────────────────────────────────────────
+window.addEventListener('load', function(){
+  // Populate arch desc
+  var arch = SharedEngine.ARCHITECTURES ? SharedEngine.ARCHITECTURES['A'] : null;
+  if(arch) setHTML('arch-desc-box', '<b style="color:var(--accent2)">'+arch.name+'</b><br>'+arch.desc);
+
+  checkODE();
+  setInterval(checkODE, 30000);
+  updatePanel();
+});
+</script>
+</body>
+</html>

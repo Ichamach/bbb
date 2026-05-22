@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BBB Permeability Simulator — NeuroViral Lab</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500;600&family=Syne:wght@600;700;800&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#07090f;--bg2:#0d1119;--bg3:#131a27;--surface:#1a2235;--surface2:#202d42;
+  --border:rgba(79,140,249,0.12);--border2:rgba(79,140,249,0.25);
+  --text:#e8eef8;--text2:#8fa3c0;--text3:#3d5070;
+  --accent:#4f9cf9;--accent2:#7bc8ff;
+  --green:#3ecf8e;--amber:#f59e0b;--red:#f87171;
+  --purple:#a78bfa;--teal:#2dd4bf;--pink:#f472b6;
+  --mono:'Space Mono',monospace;--sans:'DM Sans',sans-serif;--display:'Syne',sans-serif;
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);color:var(--text);font-family:var(--sans);font-size:13px;min-height:100vh;line-height:1.6;
+  background-image:radial-gradient(ellipse at 80% 20%,rgba(79,140,249,0.05) 0%,transparent 60%),radial-gradient(ellipse at 20% 80%,rgba(155,120,250,0.04) 0%,transparent 60%);}
+.hdr{border-bottom:1px solid var(--border2);padding:12px 22px;display:flex;align-items:center;gap:12px;background:rgba(7,9,15,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+.hdr-back{font-family:var(--mono);font-size:9px;color:var(--text3);text-decoration:none;padding:3px 8px;border:1px solid var(--border);border-radius:4px;transition:all .15s;}
+.hdr-back:hover{color:var(--accent2);border-color:var(--border2);}
+.hdr-logo{width:30px;height:30px;border-radius:7px;background:linear-gradient(135deg,var(--accent),var(--purple));display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:9px;font-weight:700;color:#fff;}
+.hdr-title{font-family:var(--display);font-size:14px;font-weight:700;}
+.hdr-sub{font-size:9px;color:var(--text3);font-family:var(--mono);margin-top:1px;}
+.hdr-badge{margin-left:auto;font-family:var(--mono);font-size:8px;padding:2px 8px;border-radius:20px;color:var(--accent2);border:1px solid rgba(79,140,249,0.3);background:rgba(79,140,249,0.07);}
+.main{display:grid;grid-template-columns:320px 1fr;min-height:calc(100vh - 53px);}
+.left{border-right:1px solid var(--border);background:var(--bg2);overflow-y:auto;}
+.sect{padding:12px 14px;border-bottom:1px solid var(--border);}
+.sect-title{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.sect-title::before{content:'';width:8px;height:1px;background:var(--accent);}
+.field{margin-bottom:8px;}
+.fl{display:flex;align-items:center;gap:8px;}
+.flabel{font-size:10px;color:var(--text2);min-width:108px;flex-shrink:0;}
+.fval{font-family:var(--mono);font-size:9px;color:var(--accent2);min-width:38px;text-align:right;}
+input[type=range]{flex:1;-webkit-appearance:none;height:3px;background:var(--surface2);border-radius:2px;outline:none;}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:12px;height:12px;background:var(--accent);border-radius:50%;cursor:pointer;border:2px solid var(--bg2);transition:transform .15s;}
+input[type=range]::-webkit-slider-thumb:hover{transform:scale(1.2);}
+select{width:100%;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:5px 8px;border-radius:5px;font-family:var(--sans);font-size:11px;outline:none;cursor:pointer;margin-top:3px;}
+select:focus{border-color:var(--accent);}
+.seg{display:flex;gap:3px;flex-wrap:wrap;}
+.sbtn{font-family:var(--mono);font-size:8px;padding:3px 7px;border:1px solid var(--border2);border-radius:4px;background:none;color:var(--text3);cursor:pointer;transition:all .15s;}
+.sbtn:hover{border-color:var(--accent);color:var(--accent2);}
+.sbtn.on{background:rgba(79,156,249,.15);border-color:var(--accent);color:var(--accent2);}
+.tog-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:7px;}
+.tog-label{font-size:10px;color:var(--text2);}
+.tog{position:relative;width:26px;height:13px;}
+.tog input{opacity:0;width:0;height:0;}
+.tog-track{position:absolute;inset:0;background:var(--surface2);border-radius:7px;cursor:pointer;transition:background .2s;}
+.tog input:checked+.tog-track{background:var(--accent);}
+.tog-thumb{position:absolute;top:2px;left:2px;width:9px;height:9px;background:var(--bg);border-radius:50%;transition:transform .2s;pointer-events:none;}
+.tog input:checked~.tog-thumb{transform:translateX(13px);}
+.preset-grid{display:flex;flex-wrap:wrap;gap:5px;}
+.pbtn{font-family:var(--mono);font-size:8px;padding:3px 8px;border:1px solid var(--border2);border-radius:20px;background:none;color:var(--text2);cursor:pointer;transition:all .15s;white-space:nowrap;}
+.pbtn:hover{border-color:var(--accent);color:var(--accent2);}
+.dnote{font-size:9px;color:var(--text3);line-height:1.5;margin-top:6px;padding:7px 9px;background:var(--bg3);border-left:2px solid var(--border2);border-radius:0 4px 4px 0;display:none;}
+.dnote.show{display:block;}
+.biologic-banner{background:rgba(167,139,250,0.1);border:1px solid rgba(167,139,250,0.3);border-radius:6px;padding:8px 10px;margin-bottom:8px;font-size:9px;color:var(--purple);line-height:1.5;display:none;}
+.biologic-banner.show{display:block;}
+/* RIGHT */
+.right{overflow-y:auto;padding:16px 20px;}
+.score-hero{display:grid;grid-template-columns:auto 1fr;gap:16px;align-items:center;background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:16px 20px;margin-bottom:14px;}
+.score-circle{width:72px;height:72px;position:relative;flex-shrink:0;}
+.score-circle svg{transform:rotate(-90deg);}
+.score-num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:18px;font-weight:700;}
+.score-right{display:grid;grid-template-columns:1fr auto;gap:10px;}
+.score-label{font-family:var(--mono);font-size:16px;font-weight:700;}
+.score-sub{font-size:10px;color:var(--text2);}
+.score-dom{font-size:9px;color:var(--text3);margin-top:4px;}
+.score-dom span{color:var(--accent2);font-family:var(--mono);}
+.meta-label{font-size:8px;color:var(--text3);font-family:var(--mono);text-transform:uppercase;letter-spacing:.05em;margin-bottom:2px;}
+.meta-val{font-family:var(--mono);font-size:11px;}
+.mbar-wrap{margin-top:6px;}
+.mbar-labels{display:flex;justify-content:space-between;font-size:8px;color:var(--text3);margin-bottom:3px;}
+.mbar-track{height:5px;background:var(--surface);border-radius:3px;display:flex;overflow:hidden;}
+.mbar-para{background:#f87171;transition:width .5s;}
+.mbar-trans{background:#2dd4bf;transition:width .5s;}
+.mbar-immune{background:#f472b6;transition:width .5s;}
+.mode-badge{display:inline-block;font-family:var(--mono);font-size:8px;padding:1px 7px;border-radius:10px;margin-top:3px;}
+.mb-intact{background:rgba(62,207,142,.15);color:var(--green);}
+.mb-paracellular{background:rgba(248,113,113,.15);color:#f87171;}
+.mb-transcellular{background:rgba(45,212,191,.15);color:var(--teal);}
+.mb-immune{background:rgba(244,114,182,.15);color:var(--pink);}
+.mb-mixed{background:rgba(245,158,11,.15);color:var(--amber);}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:14px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:14px 16px;}
+.card-full{grid-column:1/-1;margin-bottom:14px;}
+.ctitle{font-family:var(--mono);font-size:8px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px;}
+/* ionization */
+.ion-row{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px;}
+.ion-cell{background:var(--bg3);border-radius:6px;padding:6px 8px;text-align:center;}
+.ion-ph{font-size:7px;color:var(--text3);margin-bottom:2px;}
+.ion-val{font-family:var(--mono);font-size:13px;font-weight:700;}
+/* route bars */
+.rbar{margin-bottom:7px;}
+.rbar-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;}
+.rbar-name{font-size:10px;color:var(--text2);}
+.rbar-val{font-family:var(--mono);font-size:9px;color:var(--text);}
+.rtrack{height:4px;background:var(--surface);border-radius:2px;overflow:hidden;}
+.rfill{height:100%;border-radius:2px;transition:width .5s;}
+/* signaling */
+.sig-panel{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:12px 16px;margin-bottom:14px;}
+.sig-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.sig-item{display:flex;flex-direction:column;align-items:center;gap:3px;}
+.sig-dot{width:10px;height:10px;border-radius:50%;}
+.sig-lbl{font-size:8px;color:var(--text3);text-align:center;}
+.sig-v{font-family:var(--mono);font-size:9px;color:var(--text2);}
+/* barrier list */
+.bitem{display:flex;align-items:flex-start;gap:8px;padding:6px 0;border-bottom:1px solid var(--border);font-size:10px;}
+.bitem:last-child{border-bottom:none;}
+.bicon{flex-shrink:0;width:16px;height:16px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:8px;margin-top:1px;}
+.bi-ok{background:rgba(62,207,142,.15);color:var(--green);}
+.bi-warn{background:rgba(245,158,11,.15);color:var(--amber);}
+.bi-danger{background:rgba(248,113,113,.15);color:#f87171;}
+.blayer{font-family:var(--mono);font-size:9px;color:var(--text);margin-bottom:2px;}
+.bnote{color:var(--text3);font-size:9px;line-height:1.4;}
+/* tags */
+.tag{font-size:8px;padding:2px 6px;border-radius:20px;font-family:var(--mono);}
+.tag-danger{background:rgba(248,113,113,.12);color:#f87171;border:1px solid rgba(248,113,113,.25);}
+.tag-warn{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.25);}
+.tag-ok{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.25);}
+.tag-info{background:rgba(79,156,249,.12);color:var(--accent2);border:1px solid rgba(79,156,249,.25);}
+.tags-row{display:flex;flex-wrap:wrap;gap:4px;}
+.interp{font-size:10px;color:var(--text2);line-height:1.65;padding:10px 13px;background:var(--bg3);border-left:2px solid var(--accent);border-radius:0 6px 6px 0;}
+.rabv-note{padding:10px 14px;background:rgba(224,85,85,0.06);border:1px solid rgba(224,85,85,0.2);border-radius:8px;font-size:10px;color:rgba(255,128,112,0.85);line-height:1.6;margin-bottom:14px;display:none;}
+.rabv-note.show{display:block;}
+/* pKa inputs */
+.pka-input{width:58px;background:var(--surface);border:1px solid var(--border2);color:var(--text);padding:3px 5px;border-radius:4px;font-size:10px;outline:none;font-family:var(--mono);}
+.pka-input:focus{border-color:var(--accent);}
+/* uncertainty band */
+.score-band{font-family:var(--mono);font-size:9px;color:var(--text3);margin-top:3px;letter-spacing:.02em;}
+.score-band span{color:var(--accent2);}
+/* evidence tier badges */
+.tier1{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--green);margin-right:3px;flex-shrink:0;vertical-align:middle;}
+.tier2{display:inline-block;width:7px;height:7px;border-radius:50%;border:1px solid var(--amber);background:transparent;margin-right:3px;flex-shrink:0;vertical-align:middle;}
+.tier-label{font-size:7px;font-family:var(--mono);padding:1px 5px;border-radius:8px;margin-left:4px;}
+.tl1{background:rgba(62,207,142,.12);color:var(--green);border:1px solid rgba(62,207,142,.2);}
+.tl2{background:rgba(245,158,11,.12);color:var(--amber);border:1px solid rgba(245,158,11,.2);}
+/* assumption log */
+.alog-wrap{max-height:0;overflow:hidden;transition:max-height .25s;margin-top:3px;}
+.alog-wrap.open{max-height:120px;}
+.alog-toggle{font-size:7px;font-family:var(--mono);color:var(--text3);cursor:pointer;background:none;border:none;padding:1px 0;letter-spacing:.04em;}
+.alog-toggle:hover{color:var(--text2);}
+.alog-line{font-size:8px;color:var(--text3);padding:1px 0 1px 8px;border-left:1px solid var(--border);line-height:1.45;margin-bottom:2px;}
+/* separate breach bars */
+.breach-grid{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:6px;}
+.breach-cell{background:var(--bg3);border-radius:5px;padding:6px 8px;}
+.breach-label{font-size:7px;font-family:var(--mono);color:var(--text3);letter-spacing:.06em;margin-bottom:3px;}
+.breach-track{height:5px;background:var(--surface);border-radius:3px;overflow:hidden;}
+.breach-fill{height:100%;border-radius:3px;transition:width .5s;}
+.breach-val{font-family:var(--mono);font-size:10px;font-weight:700;margin-top:2px;}
+.breach-mode{font-size:8px;color:var(--text3);margin-top:2px;}
+/* ODE panel */
+.ode-panel{background:linear-gradient(135deg,rgba(79,140,249,0.05),rgba(45,212,191,0.04));border:1px solid rgba(79,140,249,0.2);border-radius:10px;padding:13px 15px;margin-bottom:14px;}
+.ode-title{font-family:var(--mono);font-size:8px;color:var(--accent2);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:6px;}
+.ode-title::before{content:'⚗';font-size:10px;}
+.ode-btn{font-family:var(--mono);font-size:9px;padding:5px 12px;background:rgba(79,140,249,.12);border:1px solid rgba(79,140,249,.35);border-radius:5px;color:var(--accent2);cursor:pointer;transition:all .15s;letter-spacing:.04em;}
+.ode-btn:hover{background:rgba(79,140,249,.22);}
+.ode-btn:disabled{opacity:.4;cursor:not-allowed;}
+.ode-metrics{display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-top:10px;}
+.ode-mc{background:var(--bg3);border-radius:6px;padding:6px 8px;text-align:center;}
+.ode-mc-label{font-size:7px;color:var(--text3);font-family:var(--mono);margin-bottom:2px;}
+.ode-mc-val{font-family:var(--mono);font-size:13px;font-weight:700;}
+.ode-timeline{height:48px;background:var(--bg3);border-radius:6px;margin-top:8px;position:relative;overflow:hidden;}
+.ode-canvas{width:100%;height:100%;}
+.ode-status{font-size:8px;color:var(--text3);margin-top:5px;font-family:var(--mono);}
+.ode-error{font-size:8px;color:#f87171;margin-top:5px;font-family:var(--mono);}
+/* pardridge note */
+.ppb-note{font-size:8px;color:var(--text3);margin-top:2px;line-height:1.3;}
+::-webkit-scrollbar{width:3px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:2px;}
+</style>
+</head>
+<body>
+<header class="hdr">
+  <a class="hdr-back" href="homepage.html">← Home</a>
+  <div class="hdr-logo">BBB</div>
+  <div>
+    <div class="hdr-title">Blood-Brain Barrier Simulator</div>
+    <div class="hdr-sub">Phase 1 engine · uncertainty bands · separate TJ/TCY breach · evidence tiers · ODE backend</div>
+  </div>
+  <div class="hdr-badge">Module 01 · v8.1</div>
+</header>
+
+<div class="main">
+<aside class="left">
+
+  <!-- PRESETS -->
+  <div class="sect">
+    <div class="sect-title">Quick Presets</div>
+    <div class="biologic-banner" id="biologic-banner">
+      ⚠ Biologic mode — MW exceeds slider range. Shown read-only.
+      Protein BBB access modeled via RMT / caveolar routes only.
+    </div>
+    <div style="margin-bottom:6px;font-size:9px;color:var(--text3)">Small molecules</div>
+    <div class="preset-grid" id="preset-sm"></div>
+    <div style="margin-top:8px;margin-bottom:6px;font-size:9px;color:var(--text3)">Nutrients</div>
+    <div class="preset-grid" id="preset-nt"></div>
+    <div style="margin-top:8px;margin-bottom:6px;font-size:9px;color:var(--text3)">Proteins (biologic mode)</div>
+    <div class="preset-grid" id="preset-protein"></div>
+    <div style="margin-top:8px;margin-bottom:6px;font-size:9px;color:rgba(224,85,85,0.8)">RABV fragments</div>
+    <div class="preset-grid" id="preset-rabv"></div>
+  </div>
+
+  <!-- PHYSICOCHEMICAL -->
+  <div class="sect">
+    <div class="sect-title">Physicochemical</div>
+    <div class="field"><div class="fl"><span class="flabel">MW (Da)</span><input type="range" id="mw" min="18" max="20000" value="180" oninput="sync()"><span class="fval" id="mw-v">180</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">logP</span><input type="range" id="logp" min="-5" max="8" step="0.1" value="0.5" oninput="sync()"><span class="fval" id="logp-v">0.5</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">H-bond donors</span><input type="range" id="hbd" min="0" max="15" step="1" value="2" oninput="sync()"><span class="fval" id="hbd-v">2</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">H-bond acceptors</span><input type="range" id="hba" min="0" max="20" step="1" value="3" oninput="sync()"><span class="fval" id="hba-v">3</span></div></div>
+    <div class="field" style="margin-bottom:10px">
+      <span class="flabel" style="display:block;margin-bottom:5px">Net charge (manual)</span>
+      <div style="font-size:8px;color:var(--text3);margin-bottom:4px">Overridden by pKa if set below</div>
+      <div class="seg" id="charge-btns">
+        <button class="sbtn" onclick="setCharge(-2)">−2</button>
+        <button class="sbtn" onclick="setCharge(-1)">−1</button>
+        <button class="sbtn on" onclick="setCharge(0)">0</button>
+        <button class="sbtn" onclick="setCharge(1)">+1</button>
+        <button class="sbtn" onclick="setCharge(2)">+2</button>
+      </div>
+    </div>
+    <div class="field"><div class="fl"><span class="flabel">Protein binding %</span><input type="range" id="ppb" min="0" max="99" value="20" oninput="sync()"><span class="fval" id="ppb-v">20%</span></div></div>
+    <div class="field">
+      <div class="fl" style="margin-bottom:5px">
+        <span class="flabel">pKa acid</span>
+        <input type="number" id="pka-acid" class="pka-input" min="0" max="14" step="0.1" placeholder="none" oninput="sync()">
+      </div>
+      <div class="fl">
+        <span class="flabel">pKa base</span>
+        <input type="number" id="pka-base" class="pka-input" min="0" max="14" step="0.1" placeholder="none" oninput="sync()">
+      </div>
+      <div style="font-size:8px;color:var(--text3);margin-top:4px">Leave blank to use manual charge above</div>
+    </div>
+    <div class="field">
+      <span class="flabel" style="display:block;margin-bottom:3px">Molecule type</span>
+      <select id="moltype" onchange="sync()">
+        <option value="sm">Small molecule</option>
+        <option value="ion">Ion</option>
+        <option value="aa">Amino acid (LAT1)</option>
+        <option value="monocarb">Monocarboxylate (MCT)</option>
+        <option value="glucose" selected>Glucose (GLUT1)</option>
+        <option value="peptide">Peptide / biologic fragment</option>
+        <option value="protein">Protein (biologic mode)</option>
+        <option value="gas">Gas</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- TRANSPORTERS -->
+  <div class="sect">
+    <div class="sect-title">Transporters &amp; Efflux</div>
+    <div class="tog-row"><span class="tog-label">P-gp / ABCB1 substrate</span><label class="tog"><input type="checkbox" id="pgp" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">BCRP substrate</span><label class="tog"><input type="checkbox" id="bcrp" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">MRP substrate</span><label class="tog"><input type="checkbox" id="mrp" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">RMT ligand (TfR/IR/LRP)</span><label class="tog"><input type="checkbox" id="rmt" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">RVG-29 conjugate (nAChR)</span><label class="tog"><input type="checkbox" id="rvg" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+    <div class="tog-row"><span class="tog-label">Cationic (AMT eligible)</span><label class="tog"><input type="checkbox" id="cation" onchange="sync()"><div class="tog-track"></div><div class="tog-thumb"></div></label></div>
+  </div>
+
+  <!-- BARRIER STATE -->
+  <div class="sect">
+    <div class="sect-title">Barrier State</div>
+    <div class="field"><div class="fl"><span class="flabel">TJ integrity</span><input type="range" id="tj" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="tj-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">AJ integrity</span><input type="range" id="aj" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="aj-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">MMP activity</span><input type="range" id="mmp" min="0" max="100" value="0" oninput="sync()"><span class="fval" id="mmp-v">0%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">NF-κB tone</span><input type="range" id="nfkb" min="0" max="100" value="0" oninput="sync()"><span class="fval" id="nfkb-v">0%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Wnt/β-catenin</span><input type="range" id="wnt" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="wnt-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Pericyte coverage</span><input type="range" id="pericyte" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="pericyte-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Shh</span><input type="range" id="shh" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="shh-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Notch</span><input type="range" id="notch" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="notch-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">Angiopoietin bal.</span><input type="range" id="angpt" min="0" max="100" value="100" oninput="sync()"><span class="fval" id="angpt-v">100%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">PTM disruption</span><input type="range" id="ptm" min="0" max="100" value="0" oninput="sync()"><span class="fval" id="ptm-v">0%</span></div></div>
+    <div class="field"><div class="fl"><span class="flabel">CBF (% normal)</span><input type="range" id="cbf" min="10" max="150" value="100" oninput="sync()"><span class="fval" id="cbf-v">100%</span></div></div>
+  </div>
+
+  <!-- DISEASE CONTEXT -->
+  <div class="sect">
+    <div class="sect-title">Disease Context</div>
+    <select id="disease" onchange="applyDisease()">
+      <option value="none">Healthy BBB</option>
+      <optgroup label="── RABV Infection States ──">
+        <option value="rabv_wildtype">🦠 RABV Wild-type (BBB intact)</option>
+        <option value="rabv_p_neutralized">💉 RABV + P-protein neutralized</option>
+        <option value="rabv_late_stage">⚠️ RABV Late-stage symptomatic</option>
+        <option value="rabv_n_dn_deployed">✅ RABV + N dominant-negative</option>
+      </optgroup>
+      <optgroup label="── Other CNS Diseases ──">
+        <option value="stroke_acute">Stroke (acute)</option>
+        <option value="stroke_chronic">Stroke (chronic)</option>
+        <option value="ms">Multiple sclerosis</option>
+        <option value="ad">Alzheimer's disease</option>
+        <option value="meningitis">Meningitis</option>
+        <option value="tumor">Brain tumor (BTB)</option>
+      </optgroup>
+    </select>
+    <div class="dnote" id="dnote"></div>
+  </div>
+
+  <!-- BRAIN REGION -->
+  <div class="sect">
+    <div class="sect-title">Brain Region</div>
+    <div class="seg" id="region-btns">
+      <button class="sbtn on" onclick="setRegion('cortex')">Cortex</button>
+      <button class="sbtn" onclick="setRegion('hippocampus')">Hippo</button>
+      <button class="sbtn" onclick="setRegion('brainstem')">Brainstem</button>
+      <button class="sbtn" onclick="setRegion('cerebellum')">Cerebellum</button>
+      <button class="sbtn" onclick="setRegion('thalamus')">Thalamus</button>
+      <button class="sbtn" onclick="setRegion('choroid_plexus')" style="color:rgba(245,158,11,.7);border-color:rgba(245,158,11,.25)">Choroid</button>
+    </div>
+    <div style="font-size:8px;color:var(--text3);margin-top:5px;line-height:1.4" id="region-note">Cortex — reference region (P-gp×1.0, nAChR×0.6)</div>
+  </div>
+
+</aside>
+
+<main class="right">
+
+  <div class="rabv-note" id="rabv-note"></div>
+
+  <!-- SCORE HERO -->
+  <div class="score-hero">
+    <div class="score-circle">
+      <svg width="72" height="72" viewBox="0 0 72 72">
+        <circle cx="36" cy="36" r="30" fill="none" stroke="rgba(79,140,249,0.1)" stroke-width="6"/>
+        <!-- uncertainty band arc (outer) -->
+        <circle id="score-ring-hi" cx="36" cy="36" r="30" fill="none" stroke="rgba(79,140,249,0.15)"
+          stroke-width="10" stroke-linecap="round"
+          stroke-dasharray="188.5" stroke-dashoffset="188.5"
+          style="transition:stroke-dashoffset .6s"/>
+        <circle id="score-ring" cx="36" cy="36" r="30" fill="none" stroke="var(--accent)"
+          stroke-width="6" stroke-linecap="round"
+          stroke-dasharray="188.5" stroke-dashoffset="188.5"
+          style="transition:stroke-dashoffset .6s,stroke .4s"/>
+      </svg>
+      <div class="score-num" id="score-num" style="color:var(--accent2)">0</div>
+    </div>
+    <div class="score-right">
+      <div>
+        <div class="score-label" id="score-label">—</div>
+        <div class="score-sub">CNS permeability score / 100</div>
+        <div class="score-band" id="score-band">range: <span>—</span></div>
+        <div class="score-dom">Route: <span id="dom-route">—</span></div>
+        <div class="score-dom">Efflux penalty: <span id="efflux-span" style="color:#f87171">—</span></div>
+        <!-- Separate breach bars (Phase 1 key addition) -->
+        <div class="breach-grid" style="margin-top:8px">
+          <div class="breach-cell">
+            <div class="breach-label">PARACELLULAR (TJ)</div>
+            <div class="breach-track"><div class="breach-fill" id="breach-para" style="width:0%;background:#f87171"></div></div>
+            <div class="breach-val" id="breach-para-val" style="color:#f87171">0%</div>
+            <div class="breach-mode">claudin-5/occludin/ZO-1</div>
+          </div>
+          <div class="breach-cell">
+            <div class="breach-label">TRANSCYTOSIS (MFSD2A)</div>
+            <div class="breach-track"><div class="breach-fill" id="breach-tcy" style="width:0%;background:var(--teal)"></div></div>
+            <div class="breach-val" id="breach-tcy-val" style="color:var(--teal)">0%</div>
+            <div class="breach-mode">caveolar / vesicular</div>
+          </div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;margin-top:5px">
+          <span class="mode-badge mb-intact" id="mode-badge">intact</span>
+          <span id="pgp-boost-note" style="font-size:8px;color:var(--text3);font-family:var(--mono)"></span>
+        </div>
+      </div>
+      <div>
+        <div class="meta-label">Lipinski Ro5</div>
+        <div class="meta-val" id="lip-val">—</div>
+        <div class="meta-label" style="margin-top:6px">Free fraction</div>
+        <div class="meta-val" id="free-frac" style="color:var(--teal)">—</div>
+        <div class="ppb-note" id="pardridge-note"></div>
+        <div class="meta-label" style="margin-top:6px">pKa mode</div>
+        <div class="meta-val" id="pka-mode" style="color:var(--amber);font-size:9px">—</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- IONIZATION -->
+  <div class="card" style="margin-bottom:14px">
+    <div class="ctitle">Effective charge at physiological pH compartments</div>
+    <div class="ion-row">
+      <div class="ion-cell"><div class="ion-ph">Blood pH 7.4</div><div class="ion-val" id="ion-blood">0.00</div></div>
+      <div class="ion-cell"><div class="ion-ph">Endosome pH 5.8</div><div class="ion-val" id="ion-endo">0.00</div></div>
+      <div class="ion-cell"><div class="ion-ph">Brain ISF pH 7.3</div><div class="ion-val" id="ion-brain">0.00</div></div>
+    </div>
+    <div style="font-size:9px;color:var(--text3);line-height:1.5" id="ion-note">
+      Endosomal acidification affects RMT fragment release. Charge differences between blood and ISF affect paracellular selectivity.
+    </div>
+  </div>
+
+  <!-- ODE ANALYSIS PANEL (Phase 2 backend) -->
+  <div class="ode-panel" id="ode-panel">
+    <div class="ode-title">Phase 2 ODE Analysis — Kp,uu &amp; Time-course</div>
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <button class="ode-btn" id="ode-btn" onclick="runODE()">▶ Run ODE Analysis</button>
+      <div style="font-size:9px;color:var(--text3);flex:1">Requires local Python server: <span style="font-family:var(--mono);color:var(--accent2)">uvicorn main:app --port 8000</span></div>
+      <div id="ode-status" class="ode-status"></div>
+    </div>
+    <div class="ode-metrics" id="ode-metrics" style="display:none">
+      <div class="ode-mc"><div class="ode-mc-label">Kp,uu,BBB</div><div class="ode-mc-val" id="ode-kpuu" style="color:var(--accent2)">—</div><div style="font-size:7px;color:var(--text3)">ISF/blood AUC%</div></div>
+      <div class="ode-mc"><div class="ode-mc-label">ISF peak</div><div class="ode-mc-val" id="ode-isf" style="color:var(--green)">—</div><div style="font-size:7px;color:var(--text3)">% of dose</div></div>
+      <div class="ode-mc"><div class="ode-mc-label">t peak</div><div class="ode-mc-val" id="ode-tpeak" style="color:var(--amber)">—</div><div style="font-size:7px;color:var(--text3)">hours</div></div>
+      <div class="ode-mc"><div class="ode-mc-label">Neuron</div><div class="ode-mc-val" id="ode-neur" style="color:var(--purple)">—</div><div style="font-size:7px;color:var(--text3)">% intracellular</div></div>
+    </div>
+    <canvas id="ode-canvas" class="ode-canvas" height="50" style="display:none;margin-top:8px;border-radius:5px;background:var(--bg3)"></canvas>
+    <div id="ode-legend" style="display:none;margin-top:4px;font-size:7px;color:var(--text3);font-family:var(--mono);display:flex;gap:10px">
+      <span style="color:var(--accent2)">— Blood</span>
+      <span style="color:var(--green)">— ISF</span>
+      <span style="color:var(--purple)">— Endosome</span>
+    </div>
+    <div id="ode-error" class="ode-error" style="display:none"></div>
+  </div>
+
+  <!-- SIGNALLING -->
+  <div class="sig-panel">
+    <div class="ctitle">NVU signalling pathway status</div>
+    <div class="sig-grid" id="sig-grid"></div>
+  </div>
+
+  <!-- ROUTES + NVU DIAGRAM -->
+  <div class="g2">
+    <div class="card">
+      <div class="ctitle">NVU layer model</div>
+      <svg width="100%" viewBox="0 0 240 270" xmlns="http://www.w3.org/2000/svg">
+        <!-- Blood lumen -->
+        <rect x="0" y="0" width="240" height="28" fill="#0d1929"/>
+        <text x="8" y="12" font-size="8" font-family="Space Mono,monospace" fill="#4f9cf9" font-weight="700">BLOOD LUMEN</text>
+        <text x="8" y="23" font-size="6" font-family="Space Mono,monospace" fill="#1e3a5f">plasma proteins · cells</text>
+        <!-- Glycocalyx -->
+        <rect x="0" y="28" width="240" height="7" fill="#0b2a1e" opacity=".9"/>
+        <text x="8" y="35" font-size="6" font-family="Space Mono,monospace" fill="#1d9e75">GLYCOCALYX</text>
+        <!-- Adherens junctions -->
+        <rect x="0" y="35" width="240" height="7" fill="#1a1220" opacity=".9"/>
+        <text x="8" y="42" font-size="6" font-family="Space Mono,monospace" fill="#a78bfa">ADHERENS JUNCTIONS</text>
+        <rect x="175" y="37" width="58" height="3" rx="1" fill="#1a1220"/>
+        <rect id="aj-bar" x="175" y="37" width="58" height="3" rx="1" fill="#a78bfa" opacity=".5"/>
+        <!-- BMEC -->
+        <rect x="0" y="42" width="240" height="40" fill="#1a1535" opacity=".95"/>
+        <text x="8" y="55" font-size="8" font-family="Space Mono,monospace" fill="#7f77dd" font-weight="700">BMEC ENDOTHELIUM</text>
+        <text x="8" y="65" font-size="6" font-family="Space Mono,monospace" fill="#534ab7">TJ claudin-5/occludin/ZO-1</text>
+        <text x="8" y="75" font-size="6" font-family="Space Mono,monospace" fill="#534ab7">SLC transporters · MFSD2A</text>
+        <rect x="175" y="45" width="58" height="3" rx="1" fill="#1a1535"/>
+        <rect id="tj-bar" x="175" y="45" width="58" height="3" rx="1" fill="#7f77dd"/>
+        <text x="175" y="57" font-size="6" font-family="Space Mono,monospace" fill="#4d3d8a">TJ integrity</text>
+        <rect x="175" y="59" width="58" height="3" rx="1" fill="#1a1535"/>
+        <rect id="mfsd2a-bar" x="175" y="59" width="58" height="3" rx="1" fill="#2dd4bf" opacity=".7"/>
+        <text x="175" y="71" font-size="6" font-family="Space Mono,monospace" fill="#0f6e56">MFSD2A</text>
+        <!-- BM -->
+        <rect x="0" y="82" width="240" height="9" fill="#2a1e08" opacity=".95"/>
+        <text x="8" y="89" font-size="6" font-family="Space Mono,monospace" fill="#854f0b">BASEMENT MEMBRANE</text>
+        <!-- Pericyte -->
+        <rect x="0" y="91" width="240" height="24" fill="#2a1008" opacity=".9"/>
+        <text x="8" y="103" font-size="7" font-family="Space Mono,monospace" fill="#d85a30" font-weight="700">PERICYTE LAYER</text>
+        <text x="8" y="112" font-size="6" font-family="Space Mono,monospace" fill="#993c1d">PDGFRβ · Ang/Tie2</text>
+        <rect x="175" y="94" width="58" height="3" rx="1" fill="#2a1008"/>
+        <rect id="pericyte-bar" x="175" y="94" width="58" height="3" rx="1" fill="#d85a30" opacity=".6"/>
+        <!-- ECM -->
+        <rect x="0" y="115" width="240" height="12" fill="#1a1a10" opacity=".9"/>
+        <text x="8" y="123" font-size="6" font-family="Space Mono,monospace" fill="#5f5e5a">PERIVASCULAR ECM · MMP axis</text>
+        <!-- Astrocyte endfeet -->
+        <rect x="0" y="127" width="240" height="34" fill="#0f2213" opacity=".95"/>
+        <text x="8" y="140" font-size="7" font-family="Space Mono,monospace" fill="#3ecf8e" font-weight="700">ASTROCYTE END-FEET</text>
+        <text x="8" y="150" font-size="6" font-family="Space Mono,monospace" fill="#2dd4bf">AQP4 · Wnt → claudin-5 + MFSD2A</text>
+        <text x="8" y="160" font-size="6" font-family="Space Mono,monospace" fill="#1d9e75">Shh → TJ support</text>
+        <rect x="175" y="130" width="58" height="3" rx="1" fill="#0f2213"/>
+        <rect id="wnt-bar" x="175" y="130" width="58" height="3" rx="1" fill="#3ecf8e" opacity=".7"/>
+        <!-- Neuropil -->
+        <rect x="0" y="161" width="240" height="27" fill="#111720" opacity=".95"/>
+        <text x="8" y="174" font-size="7" font-family="Space Mono,monospace" fill="#8fa3c0">NEUROPIL / BRAIN INTERSTITIUM</text>
+        <text x="8" y="184" font-size="6" font-family="Space Mono,monospace" fill="#3d5070">neurons · microglia · ISF pH 7.3</text>
+        <!-- Route arrow -->
+        <defs>
+          <marker id="arrh" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="4" markerHeight="4" orient="auto-start-reverse">
+            <path d="M2 1L8 5L2 9" fill="none" stroke="context-stroke" stroke-width="1.5" stroke-linecap="round"/>
+          </marker>
+        </defs>
+        <line id="route-arrow" x1="230" y1="4" x2="230" y2="178" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrh)" opacity="0" style="transition:opacity .3s"/>
+        <text id="route-label" x="235" y="105" font-size="6" font-family="Space Mono,monospace" fill="#f59e0b" opacity="0" transform="rotate(90,235,105)" style="transition:opacity .3s"></text>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="ctitle">Transport route scores</div>
+      <div id="route-bars"></div>
+      <div style="margin-top:12px">
+        <div class="ctitle">Regulatory factors</div>
+        <div class="tags-row" id="factor-tags"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- BARRIER LIST -->
+  <div class="card card-full">
+    <div class="ctitle">Barrier-by-barrier verdict</div>
+    <div id="barrier-list"></div>
+  </div>
+
+  <!-- INTERPRETIVE ANALYSIS -->
+  <div class="card card-full">
+    <div class="ctitle">Interpretive analysis</div>
+    <div class="interp" id="interp"></div>
+  </div>
+
+</main>
+</div>
+
+<script src="shared_engine.js"></script>
+<script>
+// ── BBB SIMULATOR UI v8.1 ─────────────────────────────────
+let baseCharge = 0, region = 'cortex';
+let biologicMode = false;
+let biologicMW   = null;
+const $ = id => document.getElementById(id);
+
+const REGION_NOTES = {
+  cortex       : 'Cortex — reference (P-gp×1.0, nAChR×0.60)',
+  hippocampus  : 'Hippocampus — RABV target (GLUT1×1.3, nAChR×1.0, P-gp×0.8)',
+  brainstem    : 'Brainstem — high efflux (P-gp×1.4, BCRP×1.3, nAChR×1.4)',
+  cerebellum   : 'Cerebellum — moderate efflux (P-gp×1.2)',
+  thalamus     : 'Thalamus — close to cortex (GLUT1×1.1, P-gp×0.9)',
+  choroid_plexus: '⚠ Choroid plexus — leaky epithelium (TJ×0.5, GLUT1×1.5)',
+};
+
+// ── MOL BUILDER ──────────────────────────────────────────
+function getMol() {
+  const pkaAcidRaw = $('pka-acid').value.trim();
+  const pkaBaseRaw = $('pka-base').value.trim();
+  const hasPKaAcid = pkaAcidRaw !== '' && !isNaN(parseFloat(pkaAcidRaw));
+  const hasPKaBase = pkaBaseRaw !== '' && !isNaN(parseFloat(pkaBaseRaw));
+  const mwVal = biologicMode && biologicMW ? biologicMW : +$('mw').value;
+  return SharedEngine.buildMolecule({
+    mw         : mwVal,
+    logp       : +$('logp').value,
+    hbd        : +$('hbd').value,
+    hba        : +$('hba').value,
+    ppb        : +$('ppb').value,
+    base_charge: baseCharge,
+    pKa_acid   : hasPKaAcid ? parseFloat(pkaAcidRaw) : null,
+    pKa_base   : hasPKaBase ? parseFloat(pkaBaseRaw) : null,
+    type       : $('moltype').value,
+    pgp        : $('pgp').checked,
+    bcrp       : $('bcrp').checked,
+    mrp        : $('mrp').checked,
+    rmt        : $('rmt').checked,
+    rvg        : $('rvg').checked,
+    cation     : $('cation').checked,
+    tj         : +$('tj').value,
+    aj         : +$('aj').value,
+    mmp        : +$('mmp').value,
+    nfkb       : +$('nfkb').value,
+    wnt        : +$('wnt').value,
+    shh        : +$('shh').value,
+    pericyte   : +$('pericyte').value,
+    notch      : +$('notch').value,
+    angpt      : +$('angpt').value,
+    ptm        : +$('ptm').value,
+    cbf        : +$('cbf').value,
+  });
+}
+
+// ── UI CONTROLS ──────────────────────────────────────────
+function setCharge(v) {
+  baseCharge = v;
+  document.querySelectorAll('#charge-btns .sbtn').forEach((b,i) =>
+    b.classList.toggle('on', [-2,-1,0,1,2][i] === v));
+  sync();
+}
+
+function setRegion(v) {
+  region = v;
+  const regionKeys = ['cortex','hippocampus','brainstem','cerebellum','thalamus','choroid_plexus'];
+  document.querySelectorAll('#region-btns .sbtn').forEach((b,i) =>
+    b.classList.toggle('on', regionKeys[i] === v));
+  const rn = $('region-note');
+  if (rn) rn.textContent = REGION_NOTES[v] || v;
+  sync();
+}
+
+function syncLabels() {
+  const ids = ['mw','logp','hbd','hba','tj','aj','mmp','nfkb','wnt','shh','pericyte','notch','angpt','ptm','cbf','ppb'];
+  ids.forEach(id => {
+    const el = $(id+'-v'); if (!el) return;
+    const v  = $(id) ? $(id).value : 0;
+    if      (id === 'logp') el.textContent = parseFloat(v).toFixed(1);
+    else if (id === 'ppb')  el.textContent = v + '%';
+    else if (['mw','hbd','hba'].includes(id)) el.textContent = v;
+    else    el.textContent = v + '%';
+  });
+  if (biologicMode && biologicMW) $('mw-v').textContent = biologicMW.toLocaleString();
+}
+
+function applyDisease() {
+  const d = $('disease').value;
+  const p = SharedEngine.DISEASE_PARAMS[d];
+  if (!p) return;
+  ['tj','aj','mmp','nfkb','wnt','shh','pericyte','notch','angpt','ptm'].forEach(id => {
+    const el = $(id); if (el && p[id] != null) el.value = p[id];
+  });
+  if (p.cbf != null) $('cbf').value = p.cbf;
+  const n = $('dnote');
+  if (n) {
+    n.textContent = SharedEngine.DISEASE_NOTES[d] || '';
+    n.classList.toggle('show', !!(SharedEngine.DISEASE_NOTES[d]));
+  }
+  const rn = $('rabv-note');
+  if (rn) {
+    const isRabv = d.startsWith('rabv');
+    rn.textContent = isRabv ? (SharedEngine.DISEASE_NOTES[d] || '') : '';
+    rn.classList.toggle('show', isRabv);
+  }
+  syncLabels();
+  sync();
+}
+
+// ── MAIN SYNC ────────────────────────────────────────────
+function sync() {
+  syncLabels();
+  const mol = getMol();
+  const res = SharedEngine.analyzeMolecule(mol, region);
+  const { signaling: sig, routes, score, lipinski, effectiveCharge: ec } = res;
+
+  // Score ring
+  const C   = 188.5;
+  const col = score.net >= 60 ? '#3ecf8e' : score.net >= 30 ? '#f59e0b' : '#f87171';
+  const ring = $('score-ring');
+  ring.style.strokeDashoffset = C * (1 - score.net / 100);
+  ring.style.stroke = col;
+  // Uncertainty band arc (wider, lighter)
+  const ringHi = $('score-ring-hi');
+  const band = score.netBand || { low: Math.max(0, score.net-8), high: Math.min(100, score.net+12) };
+  if (ringHi) ringHi.style.strokeDashoffset = C * (1 - band.high / 100);
+  const sn = $('score-num');
+  sn.textContent = Math.round(score.net);
+  sn.style.color = col;
+  const lbls = ['Negligible','Very low','Low','Moderate','Good','High','Very high'];
+  const sl = $('score-label');
+  sl.textContent = lbls[Math.min(6, Math.floor(score.net / 15))];
+  sl.style.color = col;
+  // Band display
+  const sb = $('score-band');
+  if (sb) sb.innerHTML = `range: <span>${band.low}–${band.high}</span> <span style="color:var(--text3);font-size:7px">(±1 SD biological variability)</span>`;
+  $('dom-route').textContent   = score.bestRoute || '—';
+  $('efflux-span').textContent = score.effluxPenalty > 0 ? `−${Math.round(score.effluxPenalty * 0.6)} pts` : 'None';
+
+  // ── Separate breach bars (Phase 1 key addition) ───────────────────
+  const paraBr = sig.paracellularBreach != null ? sig.paracellularBreach : sig.paraBreach || 0;
+  const tcyBr  = sig.transcytosisBreach != null ? sig.transcytosisBreach : sig.transBreach || 0;
+  const pb = $('breach-para'), pv = $('breach-para-val');
+  const tb = $('breach-tcy'),  tv = $('breach-tcy-val');
+  if (pb) pb.style.width = paraBr + '%';
+  if (pv) { pv.textContent = paraBr + '%'; pv.style.color = paraBr > 30 ? '#f87171' : paraBr > 10 ? 'var(--amber)' : 'var(--green)'; }
+  if (tb) tb.style.width = tcyBr + '%';
+  if (tv) { tv.textContent = tcyBr + '%'; tv.style.color = tcyBr > 30 ? 'var(--amber)' : tcyBr > 10 ? 'rgba(45,212,191,0.7)' : 'var(--green)'; }
+
+  const mb = $('mode-badge');
+  mb.textContent = sig.failureMode;
+  mb.className   = 'mode-badge mb-' + sig.failureMode;
+
+  // P-gp inflammation boost note
+  const pgpNote = $('pgp-boost-note');
+  if (pgpNote) {
+    const boost = sig.pgpInflamBoost || 1.0;
+    pgpNote.textContent = boost > 1.05 && mol.pgp ? `P-gp ×${boost.toFixed(2)} (NF-κB)` : '';
+  }
+
+  // Lipinski + free fraction + Pardridge note
+  $('lip-val').textContent  = lipinski.passes ? '✓ Passes Ro5' : '✗ ' + lipinski.violations.join(', ');
+  $('lip-val').style.color  = lipinski.passes ? 'var(--green)' : '#f87171';
+  $('free-frac').textContent = Math.round((1 - mol.ppb) * 100) + '%';
+  const pardNote = $('pardridge-note');
+  if (pardNote) {
+    const blend = Math.max(0, Math.min(1, mol.logp / 2.0));
+    if (blend > 0.5) {
+      pardNote.textContent = `logP=${mol.logp.toFixed(1)} → Pardridge correction: PPB partially bypassed (${Math.round(blend*100)}%)`;
+      pardNote.style.color = 'var(--accent2)';
+    } else {
+      pardNote.textContent = '';
+    }
+  }
+  const hasPKa = mol.pKa_acid != null || mol.pKa_base != null;
+  $('pka-mode').textContent = hasPKa ? 'pKa-computed' : 'Manual charge';
+
+  // Ionization panel
+  const ionCol = c => { const a = Math.abs(c); return a < 0.15 ? 'var(--green)' : a < 0.8 ? 'var(--amber)' : '#f87171'; };
+  [$('ion-blood'), $('ion-endo'), $('ion-brain')].forEach((el, i) => {
+    if (!el) return;
+    const v = [ec.blood, ec.endosome, ec.brain][i];
+    el.textContent = (v >= 0 ? '+' : '') + v.toFixed(2);
+    el.style.color = ionCol(v);
+  });
+  const in2 = $('ion-note');
+  if (in2) {
+    const delta = Math.abs(ec.endosome - ec.blood);
+    in2.textContent = delta > 0.3
+      ? `Significant pH shift: Δcharge ${delta.toFixed(2)} blood→endosome. Affects RMT fragment release kinetics and endosomal escape.`
+      : 'Charge is stable across pH compartments — ionization not a major variable for this molecule.';
+  }
+
+  // Signalling grid
+  const sg = $('sig-grid'); sg.innerHTML = '';
+  [
+    {l:'Wnt',     v:Math.round(sig.wntLevel*100),          pos:true},
+    {l:'Shh',     v:Math.round(sig.shhLevel*100),          pos:true},
+    {l:'Pericyte',v:Math.round(sig.pericyteLevel*100),     pos:true},
+    {l:'MFSD2A',  v:Math.round(sig.effectiveMFSD2A*100),   pos:true},
+    {l:'MMP',     v:Math.round(sig.mmpLevel*100),          pos:false},
+    {l:'NF-κB',   v:Math.round(sig.nfkbLevel*100),         pos:false},
+    {l:'AJ',      v:Math.round(sig.effectiveAJ*100),       pos:true},
+    {l:'TJ',      v:Math.round(sig.effectiveTJ*100),       pos:true},
+  ].forEach(({l, v, pos}) => {
+    const ok   = pos ? v > 60 : v < 30;
+    const warn = pos ? (v > 30 && v <= 60) : (v >= 30 && v < 60);
+    const c2   = ok ? 'var(--green)' : warn ? 'var(--amber)' : '#f87171';
+    sg.innerHTML += `<div class="sig-item"><div class="sig-dot" style="background:${c2}"></div><div class="sig-lbl">${l}</div><div class="sig-v">${v}%</div></div>`;
+  });
+
+  // NVU SVG bars
+  const setW = (id, f) => {
+    const el = $(id);
+    if (el) el.setAttribute('width', String(Math.round(Math.max(0, Math.min(58, f * 58)))));
+  };
+  setW('tj-bar',      sig.effectiveTJ);
+  setW('aj-bar',      sig.effectiveAJ);
+  setW('mfsd2a-bar',  sig.effectiveMFSD2A);
+  setW('pericyte-bar',sig.pericyteLevel);
+  setW('wnt-bar',     sig.wntLevel);
+
+  // Route bars with evidence tier badges and expandable assumption logs
+  const rb = $('route-bars'); rb.innerHTML = '';
+  let routeIdx = 0;
+  Object.entries(routes).forEach(([n, r]) => {
+    const sc3  = Math.round(r.score);
+    const tier = r.evidenceTier || 1;
+    const isH  = r.isHeuristic;
+    const tierBadge = tier === 1
+      ? `<span class="tier-label tl1">validated</span>`
+      : `<span class="tier-label tl2">experimental</span>`;
+    const effluxSuf = r.negative ? ' <span style="color:#f87171;font-size:8px">↓ efflux</span>'
+                    : r.immune   ? ' <span style="color:#f472b6;font-size:8px">ℹ immune</span>' : '';
+    const tierDot = tier === 1 ? `<span class="tier1"></span>` : `<span class="tier2"></span>`;
+    // Uncertainty band on bar
+    const bnd = r.band || { low: sc3, high: sc3 };
+    const logId = `rlog-${routeIdx}`;
+    const hasLog = r.assumptionLog && r.assumptionLog.length > 0;
+    const logLines = hasLog ? r.assumptionLog.map(l => `<div class="alog-line">${l}</div>`).join('') : '';
+    rb.innerHTML += `<div class="rbar">
+      <div class="rbar-head">
+        <span class="rbar-name">${tierDot}${n}${effluxSuf}${tierBadge}</span>
+        <div style="display:flex;align-items:center;gap:5px">
+          <span style="font-size:8px;color:var(--text3);font-family:var(--mono)">${bnd.low}–${bnd.high}</span>
+          <span class="rbar-val">${sc3}</span>
+        </div>
+      </div>
+      <div class="rtrack" style="position:relative">
+        <div style="position:absolute;height:100%;border-radius:2px;background:${r.color};opacity:0.18;transition:width .5s;width:${bnd.high}%"></div>
+        <div class="rfill" style="width:${sc3}%;background:${r.color}${r.immune?';opacity:.5':''}"></div>
+      </div>
+      ${hasLog ? `<div style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">
+        <button class="alog-toggle" onclick="toggleLog('${logId}')">▸ assumptions</button>
+      </div>
+      <div class="alog-wrap" id="${logId}">${logLines}</div>` : ''}
+    </div>`;
+    routeIdx++;
+  });
+
+  // Route arrow on SVG
+  const colorMap = {
+    'Passive diffusion':'#a78bfa','Paracellular (TJ+AJ)':'#f87171','CMT / SLC':'#3ecf8e',
+    'RMT (TfR/IR/LRP)':'#4f9cf9','RVG-29 (nAChR)':'#e05555','Caveolar (MFSD2A)':'#2dd4bf',
+    'AMT (adsorptive)':'#f59e0b'
+  };
+  const vis = score.best > 5 && !routes[score.bestRoute]?.negative && !routes[score.bestRoute]?.immune;
+  const ra = $('route-arrow'), rl = $('route-label');
+  if (ra) { ra.style.opacity = vis ? '1' : '0'; if (vis) ra.setAttribute('stroke', colorMap[score.bestRoute] || '#f59e0b'); }
+  if (rl) { rl.style.opacity = vis ? '1' : '0'; if (vis) { rl.setAttribute('fill', colorMap[score.bestRoute] || '#f59e0b'); rl.textContent = score.bestRoute; } }
+
+  renderBarrier(mol, sig, routes, score);
+  renderTags(mol, sig, score);
+  renderInterp(mol, sig, routes, score);
+}
+
+// ── ASSUMPTION LOG TOGGLE ─────────────────────────────────
+function toggleLog(id) {
+  const el = $(id); if (!el) return;
+  const isOpen = el.classList.contains('open');
+  el.classList.toggle('open', !isOpen);
+  // Update toggle arrow
+  const btn = el.previousElementSibling?.querySelector('.alog-toggle');
+  if (btn) btn.textContent = isOpen ? '▸ assumptions' : '▾ assumptions';
+}
+
+// ── BARRIER LIST ─────────────────────────────────────────
+function renderBarrier(mol, sig, routes, score) {
+  const bl = $('barrier-list'); if (!bl) return;
+  const paraBr = sig.paracellularBreach != null ? sig.paracellularBreach : sig.paraBreach || 0;
+  const tcyBr  = sig.transcytosisBreach != null ? sig.transcytosisBreach : sig.transBreach || 0;
+  const layers = [
+    {
+      layer: 'Glycocalyx',
+      ok: mol.base_charge <= 0,
+      note: mol.base_charge > 0
+        ? 'Cationic — glycocalyx electrostatic interaction; AMT eligible'
+        : 'Neutral/anionic — passes without strong electrostatic interaction'
+    },
+    {
+      layer: 'Adherens junctions (VE-cadherin/β-catenin)',
+      ok: sig.effectiveAJ > 0.70, warn: sig.effectiveAJ > 0.40,
+      note: `AJ integrity ${Math.round(sig.effectiveAJ * 100)}% — ${sig.effectiveAJ > 0.70 ? 'intact' : 'compromised, destabilises TJ scaffolding via VE-cadherin/actin axis'}`
+    },
+    {
+      layer: 'Tight junctions (claudin-5/occludin/ZO-1) — paracellular channel',
+      ok: sig.effectiveTJ > 0.70, warn: sig.effectiveTJ > 0.35,
+      note: `Effective TJ ${Math.round(sig.effectiveTJ * 100)}% — paracellular breach ${paraBr}% (independent from transcytosis)`
+    },
+    {
+      layer: 'MFSD2A / caveolar suppression — transcytosis channel',
+      ok: sig.effectiveMFSD2A > 0.65, warn: sig.effectiveMFSD2A > 0.35,
+      note: `MFSD2A ${Math.round(sig.effectiveMFSD2A * 100)}% — transcytosis breach ${tcyBr}% (independent from TJ, Knowland 2014: transcytosis fails first in early disease)`
+    },
+    {
+      layer: 'MMP proteolytic axis',
+      ok: sig.mmpLevel < 0.20, warn: sig.mmpLevel < 0.50,
+      note: `MMP ${Math.round(sig.mmpLevel * 100)}% — ${sig.mmpLevel < 0.20 ? 'negligible' : 'degrades TJ proteins and basement membrane; also upregulates P-gp in endothelium'}`
+    },
+    {
+      layer: 'Transcellular lipid bilayer (passive diffusion)',
+      ok: routes['Passive diffusion'].score > 40, warn: routes['Passive diffusion'].score > 15,
+      note: `logP=${mol.logp.toFixed(1)}, HBD=${mol.hbd}, MW=${mol.mw.toLocaleString()} Da — passive score ${Math.round(routes['Passive diffusion'].score)}/100. ${mol.logp > 2 ? 'Pardridge correction: PPB partially bypassed at logP=' + mol.logp.toFixed(1) + '.' : 'Full PPB constraint applies.'}`
+    },
+    {
+      layer: 'SLC transporter system (GLUT1/LAT1/MCT — CMT)',
+      ok: routes['CMT / SLC'].score > 50, warn: routes['CMT / SLC'].score > 20,
+      note: `CMT score ${Math.round(routes['CMT / SLC'].score)}/100 — type: ${mol.type}. ${mol.type === 'glucose' ? 'GLUT1 ~70% saturated at physiological blood glucose — MM saturation applied.' : ''}`
+    },
+    {
+      layer: 'RMT — TfR/IR/LRP (receptor-mediated transcytosis)',
+      ok: routes['RMT (TfR/IR/LRP)'].score > 30, warn: routes['RMT (TfR/IR/LRP)'].score > 10,
+      note: mol.rmt
+        ? `RMT conjugate — score ${Math.round(routes['RMT (TfR/IR/LRP)'].score)}/72. Affinity-efficiency paradox: optimal Kd ~30nM (not tighter). f_trans=35%, f_recycle=45%, f_lysosome=20%.`
+        : 'No RMT ligand — route inactive (3/100 background non-specific transcytosis for proteins only)'
+    },
+    {
+      layer: 'RVG-29 / nAChR-mediated endocytosis  [Evidence tier 2]',
+      ok: routes['RVG-29 (nAChR)'].score > 20, warn: routes['RVG-29 (nAChR)'].score > 5,
+      note: mol.rvg
+        ? `RVG-29 conjugate — nAChR score ${Math.round(routes['RVG-29 (nAChR)'].score)}/40. ⚠ EXPERIMENTAL: mechanism debated (nAChR vs GABA_B vs caveolae). Species factor 0.65 applied for human.`
+        : 'Not a RVG-29 conjugate — route inactive'
+    },
+    {
+      layer: 'Efflux pumps (P-gp/BCRP/MRP) — Michaelis-Menten',
+      ok: !mol.pgp && !mol.bcrp && !mol.mrp,
+      note: (mol.pgp || mol.bcrp || mol.mrp)
+        ? `Active efflux: ${[mol.pgp&&'P-gp', mol.bcrp&&'BCRP', mol.mrp&&'MRP'].filter(Boolean).join('+')} — MM saturation at Km ~0.5–1μM. ${sig.pgpInflamBoost > 1.05 ? 'NF-κB boost ×'+sig.pgpInflamBoost.toFixed(2)+' (inflammatory upregulation).' : ''} Net penalty −${Math.round(score.effluxPenalty * 0.6)} pts`
+        : 'No ABC efflux substrate'
+    },
+    {
+      layer: 'Astrocyte/NVU signalling (Wnt/Shh)',
+      ok: sig.wntLevel > 0.60 && sig.shhLevel > 0.50, warn: sig.wntLevel > 0.35 || sig.shhLevel > 0.35,
+      note: `Wnt ${Math.round(sig.wntLevel * 100)}%, Shh ${Math.round(sig.shhLevel * 100)}% — ${sig.wntLevel > 0.60 ? 'barrier gene programme (claudin-5, MFSD2A) maintained' : 'suppressed — claudin-5 expression at risk'}`
+    },
+  ];
+  bl.innerHTML = layers.map(l => {
+    const v = l.ok ? 'ok' : (l.warn ? 'warn' : 'danger');
+    return `<div class="bitem">
+      <div class="bicon bi-${v}">${v==='ok'?'✓':v==='warn'?'!':'✕'}</div>
+      <div><div class="blayer">${l.layer}</div><div class="bnote">${l.note}</div></div>
+    </div>`;
+  }).join('');
+}
+
+// ── TAGS ─────────────────────────────────────────────────
+function renderTags(mol, sig, score) {
+  const ft = $('factor-tags'); if (!ft) return;
+  const tags = [];
+  if (sig.effectiveTJ < 0.50)          tags.push({l:'TJ disrupted',               c:'danger'});
+  if (tcyBreach(sig) > 30)             tags.push({l:'TCY breach >' + tcyBreach(sig) + '%', c:'warn'});
+  if (mol.pgp)                          tags.push({l:'P-gp efflux',                c:'danger'});
+  if (mol.bcrp)                         tags.push({l:'BCRP efflux',                c:'danger'});
+  if (mol.mrp)                          tags.push({l:'MRP efflux',                 c:'danger'});
+  if (mol.mw > 5000)                    tags.push({l:mol.mw>50000?'Macromolecule':'Large peptide', c:'danger'});
+  if (sig.nfkbLevel > 0.40)            tags.push({l:'NF-κB elevated',             c:'warn'});
+  if ((sig.pgpInflamBoost||1) > 1.15 && mol.pgp) tags.push({l:'P-gp ×'+(sig.pgpInflamBoost||1).toFixed(2)+' inflam', c:'warn'});
+  if (sig.wntLevel  < 0.50)            tags.push({l:'Wnt suppressed',             c:'warn'});
+  if (mol.rmt)                          tags.push({l:'RMT-TfR conjugate',          c:'ok'});
+  if (mol.rvg)                          tags.push({l:'RVG-29 ⚠tier2',             c:'info'});
+  if (mol.type === 'glucose')           tags.push({l:'GLUT1 substrate',            c:'ok'});
+  if (mol.type === 'aa')                tags.push({l:'LAT1 substrate',             c:'ok'});
+  if (mol.cation)                       tags.push({l:'AMT eligible',               c:'info'});
+  if (mol.pKa_acid != null || mol.pKa_base != null) tags.push({l:'pKa-computed charge', c:'info'});
+  if (mol.logp > 2)                     tags.push({l:`Pardridge PPB blend`,        c:'info'});
+  if (score.isHeuristic)                tags.push({l:'heuristic score',            c:'info'});
+  ft.innerHTML = tags.map(t => `<span class="tag tag-${t.c}">${t.l}</span>`).join('');
+}
+
+function tcyBreach(sig) {
+  return sig.transcytosisBreach != null ? sig.transcytosisBreach : sig.transBreach || 0;
+}
+
+// ── INTERPRETIVE TEXT ────────────────────────────────────
+function renderInterp(mol, sig, routes, score) {
+  const el = $('interp'); if (!el) return;
+  if (mol.type === 'gas') {
+    el.textContent = 'Gases cross the BBB by rapid passive diffusion — rate-limited by CBF, not barrier permeability.';
+    return;
+  }
+  const freePct = Math.round((1 - mol.ppb) * 100);
+  const mwStr   = mol.mw >= 1000 ? (mol.mw / 1000).toFixed(1) + ' kDa' : mol.mw + ' Da';
+  const band    = score.netBand || {};
+  const pardridge = mol.logp > 2 ? ` Pardridge correction applied (PPB partially bypassed at logP=${mol.logp.toFixed(1)}).` : '';
+  const tcyNote = tcyBreach(sig) > 20 && tcyBreach(sig) !== (sig.paraBreach||0)
+    ? ` Transcytosis breach ${tcyBreach(sig)}% (separate from TJ failure — early disease pattern).` : '';
+
+  if (score.net >= 60) {
+    el.textContent = `Good CNS penetration. Dominant route: ${score.bestRoute}. Score ${Math.round(score.net)} (range ${band.low||'?'}–${band.high||'?'}). Free fraction ${freePct}%, MW ${mwStr}.${pardridge} ${score.effluxPenalty > 20 ? 'Efflux pumps impose significant penalty.' : 'Efflux burden low.'}${tcyNote}`;
+  } else if (score.net >= 30) {
+    el.textContent = `Moderate penetration via ${score.bestRoute} (${Math.round(routes[score.bestRoute]?.score || 0)}/100). Score ${Math.round(score.net)} (range ${band.low||'?'}–${band.high||'?'}). Free fraction ${freePct}%.${pardridge}${tcyNote} ${sig.mmpLevel > 0.40 ? 'MMP activity degrading junctions. ' : ''}${sig.effectiveAJ < 0.50 ? 'AJ weakened. ' : ''}`;
+  } else if (score.net >= 10) {
+    el.textContent = `Limited penetration. Bottlenecks: ${[mol.mw > 500 && 'MW>'+mol.mw+'Da', mol.hbd > 5 && 'HBD='+mol.hbd, (mol.pgp||mol.bcrp)&&'efflux pumps', sig.effectiveTJ < 0.70 && 'TJ compromised'].filter(Boolean).join(', ')}.${tcyNote} Consider RMT conjugation (optimal Kd~30nM) or prodrug strategy.`;
+  } else {
+    el.textContent = `Negligible CNS penetration (score ${Math.round(score.net)}, range ${band.low||'?'}–${band.high||'?'}). ${mol.mw > 5000 ? 'Large peptide/protein — requires TfR-RMT (Kd~30nM) or LNP delivery. ' : ''}${(mol.pgp||mol.bcrp||mol.mrp) ? 'Active efflux limits exposure. ' : ''}${mol.hbd > 5 ? 'HBD='+mol.hbd+' blocks passive diffusion. ' : ''}CNS-stage delivery strategies required.`;
+  }
+}
+
+// ── ODE ANALYSIS (Phase 2 backend) ───────────────────────
+async function runODE() {
+  const btn = $('ode-btn');
+  const status = $('ode-status');
+  const errEl  = $('ode-error');
+  const metrics= $('ode-metrics');
+  const canvas = $('ode-canvas');
+  const legend = $('ode-legend');
+  if (btn) btn.disabled = true;
+  if (status) status.textContent = '⏳ Calling localhost:8000...';
+  if (errEl)  { errEl.style.display = 'none'; }
+
+  const mol = getMol();
+  const payload = {
+    name     : 'BBB_Sim_Molecule',
+    mw       : mol.mw,
+    logp     : mol.logp,
+    hbd      : mol.hbd,
+    hba      : mol.hba,
+    ppb      : mol.ppb,   // 0.0-0.99 fraction — matches main.py Field(ge=0.0, le=0.99)
+    mol_type : mol.type,
+    pgp      : mol.pgp,
+    bcrp     : mol.bcrp,
+    mrp      : mol.mrp,
+    rmt      : mol.rmt,
+    rmt_kd_nm: 30.0,
+    rvg      : mol.rvg,
+    cation   : mol.cation,
+    tj       : mol.tj, aj: mol.aj, mmp: mol.mmp, nfkb: mol.nfkb,
+    wnt      : mol.wnt, shh: mol.shh, pericyte: mol.pericyte,
+    notch    : mol.notch, angpt: mol.angpt, ptm: mol.ptm, cbf: mol.cbf,
+    region   : region,
+    species  : 'human',
+    dose_nm  : 100.0,
+    t_hours  : 12.0,
+    dt_hours : 0.02,
+  };
+
+  try {
+    const t0 = performance.now();
+    const resp = await fetch('http://localhost:8000/analyze', {
+      method : 'POST',
+      headers: {'Content-Type':'application/json'},
+      body   : JSON.stringify(payload),
+    });
+    if (!resp.ok) throw new Error('Server error ' + resp.status);
+    const d = await resp.json();
+    const elapsed = Math.round(performance.now() - t0);
+
+    // Show metrics
+    if (metrics) metrics.style.display = 'grid';
+    const col = v => v > 50 ? 'var(--green)' : v > 10 ? 'var(--amber)' : '#f87171';
+    setODE('ode-kpuu',  d.kpuu_pct.toFixed(1) + '%',   col(d.kpuu_pct));
+    setODE('ode-isf',   d.isf_peak_pct.toFixed(2) + '%', col(d.isf_peak_pct * 10));
+    setODE('ode-tpeak', d.t_peak_h.toFixed(1) + 'h',   'var(--amber)');
+    setODE('ode-neur',  (d.neuron_pct * 1000).toFixed(2) + '‰', 'var(--purple)');
+
+    if (status) status.textContent = `✓ Phase 2 ODE — ${elapsed}ms · Kp,uu=${d.kpuu_pct.toFixed(1)}% · mode=${d.failure_mode}`;
+
+    // Draw timeline canvas
+    if (canvas && d.timeline_t && d.timeline_t.length > 1) {
+      canvas.style.display = 'block';
+      if (legend) legend.style.display = 'flex';
+      drawTimeline(canvas, d.timeline_t, d.timeline_blood, d.timeline_isf, d.timeline_endo);
+    }
+  } catch(e) {
+    if (errEl)  { errEl.textContent = '✗ ' + e.message + ' — Is the Python server running? uvicorn main:app --port 8000'; errEl.style.display = 'block'; }
+    if (status) status.textContent = '';
+  }
+  if (btn) btn.disabled = false;
+}
+
+function setODE(id, val, color) {
+  const el = $(id); if (!el) return;
+  el.textContent = val;
+  el.style.color = color || 'var(--text)';
+}
+
+function drawTimeline(canvas, t, blood, isf, endo) {
+  const ctx = canvas.getContext('2d');
+  const W = canvas.offsetWidth || 400;
+  const H = canvas.offsetHeight || 50;
+  canvas.width  = W;
+  canvas.height = H;
+  ctx.clearRect(0, 0, W, H);
+  ctx.fillStyle = '#131a27';
+  ctx.fillRect(0, 0, W, H);
+  const maxV = Math.max(...blood, ...isf, ...endo, 0.001);
+  const scaleX = W / (t.length - 1);
+  const scaleY = (H - 6) / maxV;
+  const drawLine = (arr, color) => {
+    ctx.beginPath();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.5;
+    arr.forEach((v, i) => {
+      const x = i * scaleX;
+      const y = H - 3 - v * scaleY;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+  };
+  drawLine(blood, 'rgba(79,156,249,0.8)');
+  drawLine(isf,   'rgba(62,207,142,0.9)');
+  drawLine(endo,  'rgba(167,139,250,0.7)');
+}
+
+// ── PRESET LOADER ────────────────────────────────────────
+function loadPreset(p) {
+  biologicMode = false; biologicMW = null;
+  const ppbPct    = Math.round((p.ppb || 0) * 100);
+  const isProtein = p.type === 'protein' || p.mw > 20000;
+  if (isProtein) {
+    biologicMode = true; biologicMW = p.mw;
+    $('mw').value = 20000;
+    $('biologic-banner').classList.add('show');
+  } else {
+    $('mw').value = Math.min(20000, p.mw);
+    $('biologic-banner').classList.remove('show');
+  }
+  $('logp').value    = Math.max(-5, Math.min(8, p.logp));
+  $('hbd').value     = Math.min(15, p.hbd);
+  $('hba').value     = Math.min(20, p.hba);
+  $('ppb').value     = Math.min(99, ppbPct);
+  $('moltype').value = p.type || 'sm';
+  $('pgp').checked   = p.pgp   || false;
+  $('bcrp').checked  = p.bcrp  || false;
+  $('mrp').checked   = p.mrp   || false;
+  $('rmt').checked   = p.rmt   || false;
+  $('rvg').checked   = p.rvg   || false;
+  $('cation').checked= p.cation|| false;
+  $('pka-acid').value = p.pKa_acid  != null ? p.pKa_acid  : '';
+  $('pka-base').value = p.pKa_base  != null ? p.pKa_base  : '';
+  const ch      = p.base_charge != null ? p.base_charge : (p.charge || 0);
+  const clamped = Math.max(-2, Math.min(2, Math.round(ch)));
+  setCharge(clamped);
+  sync();
+}
+
+// ── BUILD PRESET BUTTONS ─────────────────────────────────
+function buildPresets() {
+  ['sm','nt','protein','rabv'].forEach(cat => {
+    const container = $('preset-' + cat); if (!container) return;
+    (SharedEngine.PRESETS[cat] || []).forEach(p => {
+      const btn = document.createElement('button');
+      btn.className   = 'pbtn';
+      btn.textContent = p.name;
+      if (cat === 'rabv')    btn.style.cssText = 'border-color:rgba(224,85,85,0.3);color:rgba(255,128,112,0.8)';
+      if (cat === 'protein') btn.style.cssText = 'border-color:rgba(167,139,250,0.3);color:rgba(196,164,255,0.8)';
+      btn.onclick = () => loadPreset(p);
+      container.appendChild(btn);
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', () => { buildPresets(); sync(); });
+</script>
+</body>
+</html>
