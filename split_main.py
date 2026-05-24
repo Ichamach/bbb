@@ -67,6 +67,22 @@ class ScoreRequest(BaseModel):
     isf_peak_pct:      Optional[float] = 0.0
     kpuu_pct:          Optional[float] = 0.0
     n_samples:         int   = Field(500, ge=50, le=2000)
+    # ── Real physicochemical properties from FASTA sequence import ───────────
+    # All optional — when None, split_core falls back to MW-derived estimates
+    f1_logp:           Optional[float] = None
+    f1_hbd:            Optional[int]   = None
+    f1_hba:            Optional[int]   = None
+    f1_ppb:            Optional[float] = None
+    f1_charge:         Optional[float] = None
+    f1_pka_acid:       Optional[float] = None
+    f1_pka_base:       Optional[float] = None
+    f2_logp:           Optional[float] = None
+    f2_hbd:            Optional[int]   = None
+    f2_hba:            Optional[int]   = None
+    f2_ppb:            Optional[float] = None
+    f2_charge:         Optional[float] = None
+    f2_pka_acid:       Optional[float] = None
+    f2_pka_base:       Optional[float] = None
 
 
 class ScenarioRequest(BaseModel):
@@ -91,6 +107,13 @@ def _to_input(req: ScoreRequest) -> DesignerInput:
         isf_peak_pct=req.isf_peak_pct or 0.0,
         kpuu_pct=req.kpuu_pct or 0.0,
         n_samples=req.n_samples,
+        # Real physicochemical props from FASTA import
+        f1_logp=req.f1_logp, f1_hbd=req.f1_hbd, f1_hba=req.f1_hba,
+        f1_ppb=req.f1_ppb,   f1_charge=req.f1_charge,
+        f1_pka_acid=req.f1_pka_acid, f1_pka_base=req.f1_pka_base,
+        f2_logp=req.f2_logp, f2_hbd=req.f2_hbd, f2_hba=req.f2_hba,
+        f2_ppb=req.f2_ppb,   f2_charge=req.f2_charge,
+        f2_pka_acid=req.f2_pka_acid, f2_pka_base=req.f2_pka_base,
     )
 
 
